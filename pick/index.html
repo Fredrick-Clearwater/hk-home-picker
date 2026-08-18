@@ -859,6 +859,16 @@ function toast(msg, type='ok'){
 }
 function fmtWan(v){ return (Math.round(v*100)/100).toLocaleString('zh-CN'); }
 function fmtMin(sec){ if(sec==null) return '--'; const m=Math.round(sec/60); return m>=60 ? Math.floor(m/60)+'小时'+(m%60 ? m%60+'分':'') : m+'分'; }
+/* 兼容 AMap 2.0：location 可能是 LngLat 对象、可能是 "lng,lat" 字符串，也可能是 {lng,lat} */
+function getLngLat(loc){
+  if(loc==null) return [null,null];
+  if(typeof loc==='string'){ const p=loc.split(',').map(Number); return [p[0],p[1]]; }
+  if(typeof loc==='object'){
+    if(loc.lng!==undefined) return [loc.lng, loc.lat];
+    if(typeof loc.getLng==='function') return [loc.getLng(), loc.getLat()];
+  }
+  return [null,null];
+}
 /* 区域卡片配图：前 4 区用首页真实图，后面 8 区沿用水墨兜底 */
 function areaImage(idx){
   if(idx < 4) return 'background-image:url(../assets/images/area'+(idx+1)+'.png);background-size:cover;background-position:center';
@@ -1112,7 +1122,7 @@ async function loadLifePois(area){
     }
     stats.push({ ...L, count:pois.length });
     pois.filter(p=>p.location).forEach(p=>{
-      const [lng,lat]=p.location.split(',').map(Number);
+      const [lng,lat]=getLngLat(p.location);
       allMarkers.push(new AMap.Marker({ position:[lng,lat],
         content:'<div style="width:22px;height:22px;border-radius:50%;background:'+L.color+';color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.22)"><i class="fa-solid '+L.icon+'" style="font-size:9px"></i></div>' }));
     });
@@ -1149,7 +1159,7 @@ function searchWork(){
   }).catch(amapErr);
 }
 function pickWork(s){
-  const [lng,lat] = s.location.split(',').map(Number);
+  const [lng,lat] = getLngLat(s.location);
   state.workPoi = { name:s.name, lng, lat };
   state.workKw = s.name; state.workSuggestions = [];
   state.commuteResults = [];
@@ -1332,7 +1342,7 @@ function loadLayerPois(layer){
     if(!pois.length){ toast(layer.name+'：未检索到 POI','warn'); return; }
     const map = state.mapLife;
     const markers = pois.filter(p=>p.location).map(p=>{
-      const [lng,lat] = p.location.split(',').map(Number);
+      const [lng,lat] = getLngLat(p.location);
       const mk = new AMap.Marker({ position:[lng,lat],
         content:'<div style="width:26px;height:26px;border-radius:50%;background:'+layer.color+';color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)"><i class="fa-solid '+layer.icon+'" style="font-size:11px"></i></div>',
         title:p.name });
@@ -1388,7 +1398,7 @@ async function showMtrNear(a){
     const pois = (status==='complete' && result.poiList && result.poiList.pois) ? result.poiList.pois : [];
     if(!pois.length){ toast(a.name+' 附近未找到港铁站标记','warn'); return; }
     const markers = pois.filter(p=>p.location).map(p=>{
-      const [lng,lat]=p.location.split(',').map(Number);
+      const [lng,lat]=getLngLat(p.location);
       const mk = new AMap.Marker({ position:[lng,lat],
         content:'<div style="width:24px;height:24px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)"><i class="fa-solid fa-train-subway" style="font-size:10px"></i></div>' });
       mk._poi = { name:p.name, address:p.address, pname:p.pname, adname:p.adname, lng, lat, layerId:'mtr', color:'#2563eb' };
