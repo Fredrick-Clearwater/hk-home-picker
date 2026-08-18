@@ -456,7 +456,7 @@
             <label class="text-xs mb-2 block sans" style="color:rgba(239,233,219,.6)">工作地（POI 搜索）</label>
             <div class="relative">
               <input class="input" v-model="workKw" @keyup.enter="searchWork" placeholder="如：中环国际金融中心 / 鰂鱼涌太古坊 / 深圳前海" />
-              <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2" style="color:rgba(239,233,219,.5)"></i>
+              <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer hover:opacity-80" style="color:rgba(239,233,219,.7)" @click="searchWork"></i>
               <div v-if="workSuggestions.length" class="absolute z-30 mt-1 left-0 right-0 panel overflow-hidden">
                 <div v-for="(s,i) in workSuggestions" :key="i" class="px-4 py-2.5 text-sm cursor-pointer hover:bg-[rgba(28,26,23,.05)] flex items-center gap-2 sans" style="color:var(--ink)" @click="pickWork(s)">
                   <i class="fa-solid fa-location-dot text-xs" style="color:var(--red)"></i>{{ s.name }}<span class="text-xs" style="color:var(--muted)">{{ s.adname || s.district }}</span>
@@ -823,7 +823,7 @@ const state = reactive({
   // key settings
   showSettings:false, cfgKey:'', cfgSjc:'',
   // commute
-  workKw:'', workCity:'香港', workSuggestions:[], workPoi:null,
+  workKw:'', workKwTimer:null, workCity:'香港', workSuggestions:[], workPoi:null,
   mode:'transit',
   commuteModes:[
     { id:'transit', name:'港铁+公交', icon:'fa-solid fa-train-subway' },
@@ -1480,6 +1480,13 @@ function saveSettings(){
 
 /* ---------- 启动 ---------- */
 state.dateStr = new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+/* 输入即搜：workKw 变化后 350ms 防抖触发 searchWork，无需按 Enter */
+watch(()=>state.workKw, (kw)=>{
+  clearTimeout(state.workKwTimer);
+  const v = (kw||'').trim();
+  if(v.length < 2){ state.workSuggestions = []; return; }
+  state.workKwTimer = setTimeout(()=>{ searchWork(); }, 350);
+});
 watch(()=>state.amapReady, (v)=>{
   if(v){
     ['smart','commute','lifemap'].forEach(k=>{
