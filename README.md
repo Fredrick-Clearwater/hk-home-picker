@@ -50,14 +50,17 @@ npx serve .
 
 ## 高德地图 Key
 
-`pick/config.js` 已填入默认 Key。GitHub Pages 静态站 key 是公开的，但**高德控制台有域名白名单机制防盗用**——必须做这一步，否则 Key 会在第一次请求时被高德作废。
+仓库**不存任何 Key**——避免泄露。当前使用方式：
 
-去 [高德开放平台](https://console.amap.com/dev/key/app) → 找到这个应用 → 在 Key 的「域名白名单」里填：
+**在页面右上角点「设置」填 Key**
+* Key 存浏览器 localStorage，仅本机生效，不会上传到任何服务器
+* 同一浏览器每次访问自动带入；换浏览器/换电脑需要重新填一次
+* 适合：自己看 demo、临时分享给朋友
+
+**必须去 [高德开放平台](https://console.amap.com/dev/key/app) 给 Key 加域名白名单**：
 
 ```
 fredrick-clearwater.github.io/*
 ```
 
-如果想在自己的域名跑，也加一行自己的域名。
-
-如果默认 Key 失效或不够用，可以在工具页右上角点「设置」填自己的 Key，存浏览器 localStorage。
+否则 Key 在第一次请求时会被高德作废。
