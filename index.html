@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>港居通 · 湾区置业特刊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#FAF5ED;
+    --paper-deep:#F2EBDB;
+    --paper-card:#FCF9F3;
+    --ink:#1A1A17;
+    --ink-soft:#544F4A;
+    --vermilion:#C73B29;
+    --taupe:#8C8578;
+    --taupe-2:#B9B2A4;
+    --hairline:#D9D1BD;
+    --ink-divider:#3A372F;
+    --serif:"Noto Serif SC",serif;
+    --sans:"Noto Sans SC",sans-serif;
+    --content:1440px;
+    --gap:64px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  img{display:block;max-width:100%;}
+
+  /* layout shells */
+  .section{max-width:var(--content);margin:0 auto;padding:0 var(--gap);}
+  /* 内容板块统一收进 1440 主容器，与顶栏 / toprule 对齐 */
+  .hero,.catalog,.sec{max-width:var(--content);margin-left:auto;margin-right:auto;padding-left:var(--gap);padding-right:var(--gap);}
+  .bleed{width:100%;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;}
+  .bleed>.inner{max-width:var(--content);margin:0 auto;padding:0 var(--gap);}
+
+  /* ---------- header ---------- */
+  .topbar{
+    max-width:var(--content);margin:0 auto;
+    height:88px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 var(--gap);
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .seal{
+    background:var(--vermilion);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--paper-card);font-family:var(--serif);font-weight:700;
+  }
+  .seal-lg{width:38px;height:38px;font-size:20px;}
+  .brand-text{display:flex;flex-direction:column;gap:2px;line-height:1;}
+  .brand-text .zh{font-family:var(--serif);font-weight:700;font-size:22px;color:var(--ink);}
+  .brand-text .en{font-size:10px;font-weight:500;color:var(--taupe);letter-spacing:.18em;}
+  .nav{display:flex;align-items:center;gap:28px;}
+  .nav a{font-size:13px;color:var(--ink-soft);text-decoration:none;transition:color .2s;}
+  .nav a:hover{color:var(--vermilion);}
+  .btn-ink{
+    background:var(--ink);color:var(--paper-card);border:none;border-radius:3px;
+    padding:12px 22px;font-family:var(--sans);font-weight:500;font-size:14px;
+    cursor:pointer;transition:background .2s;
+  }
+  .btn-ink:hover{background:var(--vermilion);}
+  .toprule{max-width:var(--content);margin:0 auto;height:2px;background:var(--ink);}
+
+  /* ---------- hero ---------- */
+  .hero{padding-top:72px;padding-bottom:64px;display:flex;flex-direction:column;gap:48px;background:var(--paper);}
+  .hero-top{display:flex;gap:64px;align-items:flex-end;}
+  .hero-left{flex:1;display:flex;flex-direction:column;gap:24px;}
+  .eyebrow{display:flex;align-items:center;gap:10px;}
+  .eyebrow .sq{width:8px;height:8px;background:var(--vermilion);border-radius:1px;}
+  .eyebrow span{font-size:13px;font-weight:500;color:var(--vermilion);}
+  .hero-title{font-family:var(--serif);font-weight:900;font-size:76px;line-height:1.12;color:var(--ink);white-space:pre-line;}
+  .hero-sub{font-size:16px;line-height:1.7;color:var(--ink-soft);}
+  .hero-data{width:340px;display:flex;flex-direction:column;gap:20px;flex-shrink:0;}
+  .stat{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+  .stat .num{font-family:var(--serif);font-weight:700;font-size:30px;color:var(--ink);line-height:1;}
+  .stat .cap{font-size:12px;color:var(--taupe);text-align:right;}
+  .hr{height:1px;background:var(--hairline);border:none;}
+  .cta-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+  .cta-primary{background:var(--vermilion);color:var(--paper-card);border:none;border-radius:3px;padding:11px 20px;font-family:var(--sans);font-weight:500;font-size:14px;cursor:pointer;}
+  .cta-primary:hover{filter:brightness(1.08);}
+  .cta-ghost{background:none;border:none;color:var(--ink);font-family:var(--sans);font-weight:500;font-size:14px;cursor:pointer;padding:11px 4px;}
+  .cta-ghost:hover{color:var(--vermilion);}
+  .hero-fig{display:flex;flex-direction:column;gap:12px;}
+  .hero-fig .pic{width:100%;height:420px;border:1px solid var(--ink);border-radius:2px;object-fit:cover;background:var(--paper-deep);}
+  .fig-cap{display:flex;justify-content:space-between;font-size:12px;color:var(--taupe);}
+
+  /* ---------- catalog ---------- */
+  .catalog{padding-top:64px;padding-bottom:64px;display:flex;flex-direction:column;gap:40px;}
+  .catalog-head{display:flex;justify-content:space-between;align-items:baseline;}
+  .catalog-head h2{font-family:var(--serif);font-weight:900;font-size:40px;color:var(--ink);}
+  .catalog-head .note{font-size:13px;color:var(--taupe);}
+  .catalog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+  .cat-item{display:flex;flex-direction:column;gap:12px;}
+  .cat-item .topline{height:2px;background:var(--ink);}
+  .cat-item .row{display:flex;align-items:center;gap:12px;}
+  .cat-item .no{font-family:var(--serif);font-weight:700;font-size:24px;color:var(--vermilion);line-height:1;}
+  .cat-item .name{font-family:var(--serif);font-weight:700;font-size:20px;color:var(--ink);line-height:1;}
+  .cat-item .desc{font-size:13px;line-height:1.6;color:var(--ink-soft);}
+
+  /* ---------- generic section heading ---------- */
+  .sec{padding-top:80px;padding-bottom:80px;display:flex;flex-direction:column;gap:40px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;}
+  .sec-head h2{font-family:var(--serif);font-weight:900;font-size:32px;color:var(--ink);}
+  .sec-head .note{font-size:13px;color:var(--taupe);}
+
+  /* first style */
+  .s1-body{display:flex;gap:64px;align-items:center;}
+  .s1-text{width:400px;flex-shrink:0;display:flex;flex-direction:column;gap:20px;}
+  .s1-kicker{font-family:var(--serif);font-weight:700;font-size:13px;color:var(--vermilion);}
+  .s1-title{font-family:var(--serif);font-weight:900;font-size:36px;line-height:1.25;color:var(--ink);white-space:pre-line;}
+  .s1-desc{font-size:15px;line-height:1.7;color:var(--ink-soft);}
+  .s1-point{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);}
+  .s1-point .dot{width:8px;height:8px;background:var(--vermilion);flex-shrink:0;}
+  .card{background:var(--paper-card);border:1px solid var(--ink);border-radius:4px;padding:28px;display:flex;flex-direction:column;gap:20px;flex:1;}
+  .card-title{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--ink);}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{height:29px;display:inline-flex;align-items:center;padding:0 14px;border-radius:99px;font-size:12px;font-weight:500;}
+  .chip-fill{background:var(--ink);color:var(--paper-card);}
+  .chip-line{background:none;border:1px solid var(--ink);color:var(--ink);}
+  .chip-ghost{background:none;border:1px solid var(--hairline);color:var(--taupe);}
+  .rec{display:flex;align-items:center;gap:16px;}
+  /* 第二条 rec 没有 .rank，补齐与首条之间的 30+16=46px 视觉留位 */
+  .rec>.rec-info:first-child{padding-left:46px;}
+  .rank{width:30px;height:30px;flex-shrink:0;background:var(--vermilion);border-radius:3px;color:var(--paper-card);font-family:var(--serif);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .rec-info{flex:1;display:flex;flex-direction:column;gap:4px;}
+  .rec-info .nm{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--ink);}
+  .rec-info .meta{font-size:12px;color:var(--taupe);}
+  .rec-score{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+  .rec-score .v{font-family:var(--serif);font-weight:900;font-size:30px;line-height:1;}
+  .rec-score.vermilion .v{color:var(--vermilion);}
+  .rec-score.ink .v{color:var(--ink-soft);}
+  .rec-score .k{font-size:10px;color:var(--taupe);}
+  .pbar{height:4px;background:var(--hairline);border-radius:2px;overflow:hidden;}
+  .pbar>i{display:block;height:100%;width:88%;background:var(--vermilion);border-radius:2px;}
+  .footnote{font-size:11px;color:var(--taupe);}
+
+  /* second style (ink bleed) */
+  .s2{background:var(--ink);color:var(--paper-card);padding-top:72px;padding-bottom:72px;}
+  .s2 .sec-head h2{color:var(--paper-card);}
+  .s2 .sec-head .note{color:var(--taupe);}
+  .s2-body{display:flex;gap:64px;align-items:center;}
+  .commute-io{display:flex;align-items:center;gap:16px;flex-shrink:0;}
+  .io-chip{border:1px solid var(--taupe);border-radius:3px;padding:16px 24px;display:flex;flex-direction:column;gap:6px;}
+  .io-chip .lbl{font-size:11px;color:var(--taupe);}
+  .io-chip .val{font-family:var(--serif);font-weight:700;font-size:20px;color:var(--paper-card);}
+  .io-dot{width:10px;height:10px;background:var(--vermilion);flex-shrink:0;}
+  .commute-out{flex:1;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .commute-out .big{font-family:var(--serif);font-weight:900;font-size:96px;line-height:1;color:var(--vermilion);}
+  .commute-out .sub{font-size:15px;font-weight:500;color:var(--paper-card);}
+  .commute-out .tiny{font-size:12px;color:var(--taupe);}
+
+  /* third style */
+  .s3-body{display:flex;gap:24px;}
+  .s3-card{flex:1;border-radius:4px;padding:28px;display:flex;flex-direction:column;gap:20px;}
+  .s3-card.paper{background:var(--paper-card);border:1px solid var(--ink);}
+  .s3-card.ink{background:var(--ink);border:1px solid var(--ink);}
+  .s3-card .t{font-family:var(--serif);font-weight:700;font-size:18px;}
+  .s3-card.paper .t{color:var(--ink);}
+  .s3-card.ink .t{color:var(--paper-card);}
+  .s3-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
+  .s3-row .lbl{font-size:14px;}
+  .s3-row .val{font-family:var(--serif);font-weight:700;font-size:24px;line-height:1;}
+  .s3-card.paper .lbl{color:var(--ink-soft);}
+  .s3-card.ink .lbl{color:var(--taupe-2);}
+  .s3-card.paper .val.vermilion{color:var(--vermilion);}
+  .s3-card.paper .val.ink{color:var(--ink);}
+  .s3-card.ink .val.vermilion{color:var(--vermilion);}
+  .s3-card.ink .val.paper{color:var(--paper-card);}
+  .s3-note{font-size:12px;line-height:1.6;}
+  .s3-card.paper .s3-note{color:var(--taupe);}
+  .s3-card.ink .s3-note{color:var(--taupe-2);}
+
+  /* fourth style */
+  .s4-body{display:flex;gap:24px;}
+  .area-card{flex:1;background:var(--paper-card);border:1px solid var(--ink);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;}
+  .area-card .pic{width:100%;height:190px;object-fit:cover;background:var(--paper-deep);}
+  .area-card .body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:8px;}
+  .area-card .nm{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--ink);}
+  .area-card .price{font-size:12px;color:var(--taupe);}
+  .area-card .tags{font-size:12px;font-weight:500;color:var(--vermilion);}
+
+  /* fifth style */
+  .s5{background:var(--paper-deep);}
+  .budget{width:100%;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);}
+  .b-row{display:flex;}
+  .b-row+.b-row{border-top:1px solid var(--hairline);}
+  .b-cell{padding:18px 24px;display:flex;align-items:center;}
+  .b-cell.c1{width:400px;flex-shrink:0;}
+  .b-cell.c2,.b-cell.c3{width:456px;flex-shrink:0;}
+  .b-head .b-cell{font-size:13px;font-weight:500;color:var(--taupe);padding-top:16px;padding-bottom:16px;}
+  .b-cell .lbl{font-size:15px;font-weight:500;color:var(--ink);}
+  .b-cell .v{font-family:var(--serif);font-weight:700;font-size:15px;color:var(--ink);}
+  .b-cell .v.vermilion{color:var(--vermilion);}
+  .b-concl{font-family:var(--serif);font-weight:700;font-size:16px;color:var(--ink);text-align:center;margin-top:40px;}
+
+  /* footer (ink bleed) */
+  .footer{background:var(--ink);color:var(--paper-card);padding-top:64px;padding-bottom:48px;overflow:hidden;}
+  .footer-inner{position:relative;}
+  .foot-top{display:flex;justify-content:space-between;align-items:center;}
+  .foot-brand{display:flex;align-items:center;gap:12px;}
+  .foot-seal{width:34px;height:34px;font-size:18px;}
+  .foot-brand .bt{display:flex;flex-direction:column;gap:2px;line-height:1.2;}
+  .foot-brand .bt .zh{font-family:var(--serif);font-weight:700;font-size:20px;color:var(--paper-card);}
+  .foot-brand .bt .en{font-size:11px;color:var(--taupe-2);}
+  .foot-links{display:flex;gap:28px;}
+  .foot-links a{font-size:13px;color:var(--taupe-2);text-decoration:none;}
+  .foot-links a:hover{color:var(--vermilion);}
+  .foot-rule{height:1px;background:var(--ink-divider);margin-top:40px;}
+  .foot-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:24px;}
+  .foot-bottom .copy{font-size:12px;color:var(--taupe);}
+  .foot-bottom .yr{font-family:var(--serif);font-weight:700;font-size:12px;color:var(--taupe-2);}
+  .watermark{position:absolute;right:0;bottom:-10px;font-family:var(--serif);font-weight:900;font-size:140px;line-height:1;color:var(--paper-card);opacity:.06;pointer-events:none;user-select:none;white-space:nowrap;}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:1180px){
+    .s1-body{flex-direction:column;align-items:stretch;}
+    .s1-text{width:100%;}
+    .s3-body{flex-direction:column;}
+    .s4-body{flex-wrap:wrap;}
+    .area-card{flex:1 1 calc(50% - 12px);}
+    .hero-top{flex-direction:column;align-items:stretch;}
+    .hero-data{width:100%;}
+    .stat{max-width:340px;}
+    /* 预算表在中等屏宽下避免横向溢出 */
+    .b-cell.c1{width:200px;}
+    .b-cell.c2,.b-cell.c3{width:auto;flex:1;}
+  }
+  @media (max-width:820px){
+    :root{--gap:28px;}
+    .nav{display:none;}
+    .hero-title{font-size:52px;}
+    .catalog-grid{grid-template-columns:repeat(2,1fr);}
+    .s2-body{flex-direction:column;align-items:stretch;}
+    .commute-out{align-items:flex-start;}
+    .commute-out .big{font-size:72px;}
+    .b-cell.c1{width:200px;}
+    .b-cell.c2,.b-cell.c3{width:auto;flex:1;}
+    .b-cell{padding:14px 14px;}
+    .watermark{font-size:96px;}
+  }
+  @media (max-width:520px){
+    :root{--gap:18px;}
+    .hero-title{font-size:40px;}
+    .catalog-grid{grid-template-columns:1fr;}
+    .area-card{flex:1 1 100%;}
+    .commute-io{flex-wrap:wrap;}
+    .foot-top{flex-direction:column;align-items:flex-start;gap:20px;}
+    .foot-links{flex-wrap:wrap;gap:16px;}
+    .foot-bottom{flex-direction:column;align-items:flex-start;gap:10px;}
+    .hero-fig .pic{height:300px;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="seal seal-lg">港</div>
+      <div class="brand-text">
+        <span class="zh">港居通</span>
+        <span class="en">GANG JU TONG</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="#s1">智能选房</a>
+      <a href="#s2">通勤计算</a>
+      <a href="#s3">资格速查</a>
+      <a href="#s4">生活地图</a>
+      <a href="#s4">区域画像</a>
+      <a href="#s5">预算对比</a>
+    </nav>
+    <button class="btn-ink" onclick="location.href='./pick/'">开始选房</button>
+  </header>
+  <div class="toprule"></div>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-top">
+      <div class="hero-left">
+        <div class="eyebrow"><span class="sq"></span><span>丙午年特刊 · 内地新来港人才置业指南</span></div>
+        <h1 class="hero-title">落脚香港，
+先读这一页。</h1>
+        <p class="hero-sub">从选房、通勤到印花税与生活地图——把新来港人才安家要算的六笔账，写成一页清楚明白的大字报。</p>
+      </div>
+      <div class="hero-data">
+        <div class="stat"><span class="num">12 区</span><span class="cap">区域画像全覆盖</span></div>
+        <hr class="hr" />
+        <div class="stat"><span class="num">800+</span><span class="cap">内地生活设施 POI</span></div>
+        <hr class="hr" />
+        <div class="stat"><span class="num">6 式</span><span class="cap">安家决策工具</span></div>
+        <div class="cta-row">
+          <button class="cta-primary" onclick="location.href='./pick/'">开始智能选房</button>
+          <button class="cta-ghost" onclick="document.getElementById('s4').scrollIntoView()">查看区域画像</button>
+        </div>
+      </div>
+    </div>
+    <div class="hero-fig">
+      <img class="pic" src="assets/images/hero.png" alt="维港暮色速写" />
+      <div class="fig-cap">
+        <span>图① · 维港暮色速写 —— 东方之珠，在水墨里安家</span>
+        <span>港居通 · 第 01 版</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CATALOG ============ -->
+  <section class="catalog">
+    <div class="catalog-head">
+      <h2>目录 · 安家六式</h2>
+      <span class="note">六件趁手工具，对应安家六步</span>
+    </div>
+    <div class="catalog-grid">
+      <div class="cat-item">
+        <div class="topline"></div>
+        <div class="row"><span class="no">壹</span><span class="name">智能选房</span></div>
+        <p class="desc">圈选偏好标签，按通勤、预算、生活口味加权推荐区域与屋苑。</p>
+      </div>
+      <div class="cat-item">
+        <div class="topline"></div>
+        <div class="row"><span class="no">贰</span><span class="name">通勤计算</span></div>
+        <p class="desc">任选起点终点，算出港铁、巴士、步行接驳的真实门到门时间。</p>
+      </div>
+      <div class="cat-item">
+        <div class="topline"></div>
+        <div class="row"><span class="no">叁</span><span class="name">资格速查</span></div>
+        <p class="desc">永居与否、首置与否，印花税与按揭成数一页查清。</p>
+      </div>
+      <div class="cat-item">
+        <div class="topline"></div>
+        <div class="row"><span class="no">肆</span><span class="name">生活地图</span></div>
+        <p class="desc">街市、口岸、内地口味餐厅与生活设施，落在同一张图上。</p>
+      </div>
+      <div class="cat-item">
+        <div class="topline"></div>
+        <div class="row"><span class="no">伍</span><span class="name">区域画像</span></div>
+        <p class="desc">尺价、通勤、校网、烟火气——十二区各有各的性情。</p>
+      </div>
+      <div class="cat-item">
+        <div class="topline"></div>
+        <div class="row"><span class="no">陆</span><span class="name">预算对比</span></div>
+        <p class="desc">买与租的五年总账摆在一起，哪头划算一眼看清。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 第一式 智能选房 ============ -->
+  <section class="sec" id="s1">
+    <div class="s1-body">
+      <div class="s1-text">
+        <span class="s1-kicker">第壹式</span>
+        <h3 class="s1-title">标签一圈，
+好房自然浮现</h3>
+        <p class="s1-desc">不必从海量房源里捞针。先说出你在乎的事——通勤几分钟、预算多少、楼下要不要有街市——系统按权重替你排好先后。</p>
+        <div class="s1-point"><span class="dot"></span><span>通勤优先，地铁线路直达公司楼下</span></div>
+        <div class="s1-point"><span class="dot"></span><span>预算锚定，拒绝越看越贵的超支陷阱</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">智能选房 · 圈选你的偏好</div>
+        <div class="chips">
+          <span class="chip chip-fill">地铁沿线</span>
+          <span class="chip chip-fill">两房优先</span>
+          <span class="chip chip-line">月预算 ≤ 2.5 万</span>
+          <span class="chip chip-line">近街市</span>
+          <span class="chip chip-ghost">可养宠物</span>
+        </div>
+        <hr class="hr" />
+        <div class="rec">
+          <div class="rank">1</div>
+          <div class="rec-info">
+            <span class="nm">太古城 · 海景花园</span>
+            <span class="meta">两房 · 约 583 尺 · 港岛线太古站步行 4 分钟</span>
+          </div>
+          <div class="rec-score vermilion"><span class="v">94</span><span class="k">匹配度</span></div>
+        </div>
+        <div class="pbar"><i></i></div>
+        <div class="rec">
+          <div class="rec-info">
+            <span class="nm">九龙塘 · 又一居</span>
+            <span class="meta">两房 · 约 540 尺 · 观塘线九龙塘站步行 6 分钟</span>
+          </div>
+          <div class="rec-score ink"><span class="v">91</span><span class="k">匹配度</span></div>
+        </div>
+        <p class="footnote">基于 12 项偏好加权计算 · 数据更新至 2026 年 8 月</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 第二式 通勤计算 (ink bleed) ============ -->
+  <section class="bleed s2">
+    <div class="inner">
+      <div class="sec-head">
+        <h2>第贰式 · 通勤计算器</h2>
+        <span class="note">以港铁官方时刻为基准</span>
+      </div>
+      <div class="s2-body">
+        <div class="commute-io">
+          <div class="io-chip"><span class="lbl">起点</span><span class="val">罗湖</span></div>
+          <span class="io-dot"></span>
+          <div class="io-chip"><span class="lbl">终点</span><span class="val">金钟</span></div>
+        </div>
+        <div class="commute-out">
+          <span class="big">24 分钟</span>
+          <span class="sub">东铁线直达 · 无需换乘</span>
+          <span class="tiny">含两端步行与候车时间</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 第三式 资格与印花税 ============ -->
+  <section class="sec" id="s3">
+    <div class="sec-head">
+      <h2>第叁式 · 资格与印花税</h2>
+      <span class="note">政策以税务局最新公布为准</span>
+    </div>
+    <div class="s3-body">
+      <div class="s3-card paper">
+        <div class="t">永居 vs 非永居 · 首置印花税</div>
+        <div class="s3-row"><span class="lbl">香港永居 · 首置</span><span class="val vermilion">第 2 标准税率</span></div>
+        <hr class="hr" />
+        <div class="s3-row"><span class="lbl">非永居 · 人才计划来港</span><span class="val ink">同样适用</span></div>
+        <p class="s3-note">全面撤辣后，非永居买家与永居同按第 2 标准税率计税；合资格人才另有「先免后征」安排。</p>
+      </div>
+      <div class="s3-card ink">
+        <div class="t">以 HK$800 万单位试算</div>
+        <div class="s3-row"><span class="lbl">从价印花税（第 2 标准）</span><span class="val vermilion">HK$240,000</span></div>
+        <hr class="hr" />
+        <div class="s3-row"><span class="lbl">折合税率</span><span class="val paper">3.0%</span></div>
+        <p class="s3-note">输入楼价与身份，一秒出数；另附按揭成数与压力测试速查。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 第四式 区域画像 ============ -->
+  <section class="sec" id="s4">
+    <div class="sec-head">
+      <h2>第肆式 · 区域画像</h2>
+      <span class="note">千里江山，各有性情</span>
+    </div>
+    <div class="s4-body">
+      <div class="area-card">
+        <img class="pic" src="assets/images/area1.png" alt="中西区" />
+        <div class="body">
+          <span class="nm">中西区</span>
+          <span class="price">参考尺价 HK$21,000 · 中环通勤 8 分钟</span>
+          <span class="tags">金融核心 · 名校网 · 半山扶梯</span>
+        </div>
+      </div>
+      <div class="area-card">
+        <img class="pic" src="assets/images/area2.png" alt="湾仔" />
+        <div class="body">
+          <span class="nm">湾仔</span>
+          <span class="price">参考尺价 HK$17,500 · 金钟通勤 5 分钟</span>
+          <span class="tags">市井烟火 · 食肆云集 · 会展海滨</span>
+        </div>
+      </div>
+      <div class="area-card">
+        <img class="pic" src="assets/images/area3.png" alt="九龙塘" />
+        <div class="body">
+          <span class="nm">九龙塘</span>
+          <span class="price">参考尺价 HK$15,800 · 旺角通勤 6 分钟</span>
+          <span class="tags">低密度 · 校网王牌 · 又一城</span>
+        </div>
+      </div>
+      <div class="area-card">
+        <img class="pic" src="assets/images/area4.png" alt="将军澳" />
+        <div class="body">
+          <span class="nm">将军澳</span>
+          <span class="price">参考尺价 HK$11,200 · 观塘通勤 25 分钟</span>
+          <span class="tags">新市镇 · 海滨长廊 · 年轻家庭</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 第五式 预算对比 ============ -->
+  <section class="sec s5" id="s5">
+    <div class="sec-head">
+      <h2>第伍式 · 预算对比</h2>
+      <span class="note">以 HK$800 万两房 · 五年期为口径</span>
+    </div>
+    <div class="budget">
+      <div class="b-row b-head">
+        <div class="b-cell c1"><span class="lbl">五年总账</span></div>
+        <div class="b-cell c2"><span class="lbl">买 入</span></div>
+        <div class="b-cell c3"><span class="lbl">租 入</span></div>
+      </div>
+      <div class="b-row">
+        <div class="b-cell c1"><span class="lbl">每月现金流</span></div>
+        <div class="b-cell c2"><span class="v">月供约 HK$24,800</span></div>
+        <div class="b-cell c3"><span class="v">月租约 HK$19,500</span></div>
+      </div>
+      <div class="b-row">
+        <div class="b-cell c1"><span class="lbl">一次性支出</span></div>
+        <div class="b-cell c2"><span class="v">印花税与佣金约 HK$32 万</span></div>
+        <div class="b-cell c3"><span class="v">按金与佣金约 HK$4 万</span></div>
+      </div>
+      <div class="b-row">
+        <div class="b-cell c1"><span class="lbl">五年总支出</span></div>
+        <div class="b-cell c2"><span class="v vermilion">约 HK$181 万（供楼含息）</span></div>
+        <div class="b-cell c3"><span class="v vermilion">约 HK$121 万</span></div>
+      </div>
+      <div class="b-row">
+        <div class="b-cell c1"><span class="lbl">适合谁</span></div>
+        <div class="b-cell c2"><span class="v">确定长留七年以上的人</span></div>
+        <div class="b-cell c3"><span class="v">仍在观察期的你</span></div>
+      </div>
+    </div>
+    <p class="b-concl">买的是资产，租的是弹性——先想清楚七年后的自己，再下笔签哪份约。</p>
+  </section>
+
+  <!-- ============ FOOTER (ink bleed) ============ -->
+  <footer class="bleed footer">
+    <div class="inner footer-inner">
+      <div class="foot-top">
+        <div class="foot-brand">
+          <div class="seal seal-lg foot-seal">港</div>
+          <div class="bt">
+            <span class="zh">港居通</span>
+            <span class="en">新来港人才的第一页</span>
+          </div>
+        </div>
+        <nav class="foot-links">
+          <a href="#">关于本报</a>
+          <a href="#">数据口径</a>
+          <a href="#">私隐声明</a>
+          <a href="#">使用条款</a>
+          <a href="#">联络编辑部</a>
+        </nav>
+      </div>
+      <div class="foot-rule"></div>
+      <div class="foot-bottom">
+        <span class="copy">港居通 GANG JU TONG · 2026 年出品 · 数据以官方公布为准，本刊内容仅供参考</span>
+        <span class="yr">丙午年 · 湾区置业特刊</span>
+      </div>
+      <div class="watermark">安 居</div>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,51 @@
+{
+  "city": "香港",
+  "note": "图层类型映射：type 为高德 POI 分类码，kw 为关键词搜索（二选一）；普通话社区用关键词覆盖",
+  "layers": [
+    {
+      "id": "mtr",
+      "name": "港铁站",
+      "type": "150500",
+      "kw": "",
+      "color": "#2563eb",
+      "icon": "fa-train-subway",
+      "desc": "港铁站点（含轻铁），示例：keywords=将军澳&city=HK&type=150500"
+    },
+    {
+      "id": "mall",
+      "name": "商超",
+      "type": "060100",
+      "kw": "",
+      "color": "#e11d48",
+      "icon": "fa-cart-shopping",
+      "desc": "商场/购物中心 POI"
+    },
+    {
+      "id": "hospital",
+      "name": "医疗",
+      "type": "090100",
+      "kw": "",
+      "color": "#16a34a",
+      "icon": "fa-hospital",
+      "desc": "综合医院/医院 POI"
+    },
+    {
+      "id": "school",
+      "name": "校网",
+      "type": "141200",
+      "kw": "",
+      "color": "#7c3aed",
+      "icon": "fa-school",
+      "desc": "小学/中学 POI"
+    },
+    {
+      "id": "mandarin",
+      "name": "普通话服务",
+      "type": "",
+      "kw": "普通话",
+      "color": "#d97706",
+      "icon": "fa-comments",
+      "desc": "关键词搜索「普通话」，覆盖普通话培训机构/服务点"
+    }
+  ]
+}

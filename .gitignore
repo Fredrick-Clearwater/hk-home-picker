@@ -1,0 +1,15 @@
+# Build artifacts
+node_modules/
+dist/
+build/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.bak
+*.swp
+
+# Local-only data & secrets
+config.local.js
+.env
+.env.local

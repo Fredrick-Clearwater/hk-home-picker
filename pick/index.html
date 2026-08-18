@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>港居通 · 内地新来港人才选房助手</title>
+<!-- 高德 Key 配置（可改 config.js，或在页面右上角设置） -->
+<script src="config.js"></script>
+<!-- 本地兜底数据（file:// 打开时 fetch 不可用，自动降级到这份内嵌数据） -->
+<script src="embed_data.js"></script>
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<!-- Vue 3 CDN -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<!-- 导出图片依赖 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+    :root{
+        /* 港风纸墨：米纸 · 墨黑 · 朱砂 */
+        --paper:#ece7db; --paper-deep:#e3ddcc; --paper-card:#f2ede1;
+        --ink:#1c1a17; --ink-2:#55504a; --muted:#8a8375;
+        --red:#bf3a2b; --red-deep:#a02e21;
+        --hair:rgba(28,26,23,.28); --hair-soft:rgba(28,26,23,.14);
+        --paper-on-ink:#efe9db; --hair-on-ink:rgba(239,233,219,.22);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{background:var(--paper);color:var(--ink);font-family:'Noto Serif SC','Songti SC','SimSun',serif;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+        background:radial-gradient(ellipse at 12% -8%,rgba(191,58,43,.05) 0%,transparent 50%),
+        radial-gradient(ellipse at 92% 14%,rgba(28,26,23,.06) 0%,transparent 46%);}
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-thumb{background:#c9c2b2;border-radius:3px}
+    .sans{font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+    .kicker{font-size:11px;letter-spacing:.4em;color:var(--muted)}
+    .note{font-size:12px;letter-spacing:.12em;color:var(--muted)}
+    .seal{display:inline-flex;align-items:center;justify-content:center;background:var(--red);color:#f5efe2;border-radius:3px;font-weight:700}
+    .sq{display:inline-block;width:7px;height:7px;background:var(--red);flex:none}
+    section{scroll-margin-top:76px}
+
+    /* ---- 报头 ---- */
+    .masthead-top{border-bottom:1px solid var(--hair-soft)}
+    .masthead{border-bottom:2px solid var(--ink)}
+    .masthead-title{font-size:clamp(34px,4.5vw,52px);font-weight:900;letter-spacing:.06em;line-height:1}
+    .masthead-en{font-size:10px;letter-spacing:.32em;color:var(--muted)}
+
+    /* ---- 导航 ---- */
+    .nav-bar{position:sticky;top:0;z-index:50;background:rgba(236,231,219,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--ink)}
+    .navlink{font-size:14px;letter-spacing:.14em;color:var(--ink-2);padding:14px 4px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:color .2s}
+    .navlink:hover{color:var(--ink)}
+    .navlink.active{color:var(--red);border-bottom-color:var(--red);font-weight:700}
+    .navlink .nnum{color:var(--red);margin-right:2px}
+
+    /* ---- 卡片 / 面板 ---- */
+    .panel{background:var(--paper-card);border:1px solid var(--ink);border-radius:2px;box-shadow:4px 4px 0 rgba(28,26,23,.08)}
+    .panel-ink{background:var(--ink);color:var(--paper-on-ink);border:1px solid var(--ink);border-radius:2px;box-shadow:4px 4px 0 rgba(28,26,23,.18)}
+    .rule-double{border-top:4px double var(--ink)}
+    .rule-double-b{border-bottom:4px double var(--ink)}
+
+    /* ---- 按钮 ---- */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:2px;font-weight:600;font-size:14px;letter-spacing:.08em;cursor:pointer;transition:all .2s;border:1px solid var(--ink);font-family:inherit}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn-ink{background:var(--ink);color:var(--paper-on-ink)}
+    .btn-ink:hover:not(:disabled){background:var(--ink-2);transform:translateY(-1px)}
+    .btn-red{background:var(--red);border-color:var(--red);color:#f5efe2}
+    .btn-red:hover:not(:disabled){background:var(--red-deep);transform:translateY(-1px)}
+    .btn-line{background:transparent;color:var(--ink)}
+    .btn-line:hover{color:var(--red);border-color:var(--red)}
+    .btn-line-light{background:transparent;border-color:var(--hair-on-ink);color:var(--paper-on-ink)}
+    .btn-line-light:hover{color:#f0b3a8;border-color:#f0b3a8}
+
+    /* ---- 表单 ---- */
+    .input{width:100%;padding:10px 14px;border:1px solid var(--ink-2);border-radius:2px;font-size:14px;outline:none;transition:border-color .2s;background:#f7f2e7;color:var(--ink);font-family:'Noto Sans SC',sans-serif}
+    .input:focus{border-color:var(--red)}
+    .dark .input{background:rgba(239,233,219,.06);color:var(--paper-on-ink);border-color:var(--hair-on-ink)}
+    .dark .input:focus{border-color:var(--red)}
+    .dark .input::placeholder{color:rgba(239,233,219,.4)}
+    select.input option{color:var(--ink);background:var(--paper-card)}
+    input[type=range]{accent-color:var(--red)}
+
+    /* ---- 标签 / chips ---- */
+    .tag{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border:1px solid var(--hair);border-radius:2px;font-size:12px;letter-spacing:.06em;color:var(--ink-2);background:transparent}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--hair);border-radius:2px;font-size:13px;letter-spacing:.05em;color:var(--ink-2);cursor:pointer;transition:all .18s;background:transparent;font-family:inherit}
+    .chip:hover{border-color:var(--ink);color:var(--ink)}
+    .chip.on{background:var(--ink);color:var(--paper-on-ink);border-color:var(--ink)}
+    .chip.on .nnum{color:#f0b3a8}
+
+    /* ---- 选项按钮（资格速查） ---- */
+    .opt-btn{display:block;width:100%;text-align:left;padding:11px 14px;border:1px solid var(--hair);border-radius:2px;font-size:14px;cursor:pointer;transition:all .18s;background:transparent;color:var(--ink);font-family:inherit}
+    .opt-btn:hover{border-color:var(--ink)}
+    .opt-btn.on{background:var(--ink);color:var(--paper-on-ink);border-color:var(--ink);font-weight:700}
+
+    /* ---- 图层行 ---- */
+    .layer-row{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:1px solid var(--hair);border-radius:2px;font-size:14px;cursor:pointer;user-select:none;transition:all .18s;background:transparent;color:var(--ink);font-family:inherit}
+    .layer-row:hover{border-color:var(--ink)}
+    .layer-row.on{color:#fff}
+    .dot{width:9px;height:9px;border-radius:50%;flex:none}
+
+    /* ---- 列表行 ---- */
+    .rowline{display:flex;align-items:center;gap:12px;padding:12px 10px;border-bottom:1px solid var(--hair-soft);cursor:pointer;transition:background .18s}
+    .rowline:hover{background:rgba(28,26,23,.04)}
+    .rowline.sel{background:rgba(191,58,43,.07);box-shadow:inset 3px 0 0 var(--red)}
+    .dark .rowline{border-bottom-color:var(--hair-on-ink)}
+    .dark .rowline:hover{background:rgba(239,233,219,.05)}
+    .dark .rowline.sel{background:rgba(191,58,43,.16);box-shadow:inset 3px 0 0 var(--red)}
+    .rank-num{font-weight:900;font-size:20px;min-width:34px;text-align:center;flex:none}
+
+    /* ---- 进度 ---- */
+    .pbar{height:6px;background:var(--hair-soft);border-radius:0;overflow:hidden}
+    .pbar>div{height:100%;background:var(--red);transition:width .3s}
+    .dark .pbar{background:rgba(239,233,219,.15)}
+
+    /* ---- 地图 ---- */
+    .map-box{width:100%;height:100%;min-height:420px;border:1px solid var(--ink);border-radius:2px;overflow:hidden;position:relative;background:var(--paper-deep)}
+    .map-cover{position:absolute;inset:0;background:rgba(236,231,219,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:5;text-align:center;padding:24px}
+
+    /* ---- 区域卡片 ---- */
+    .area-card{transition:transform .22s, box-shadow .22s;background:var(--paper-card);border:1px solid var(--ink);border-radius:2px;overflow:hidden}
+    .area-card:hover{transform:translateY(-4px);box-shadow:6px 8px 0 rgba(28,26,23,.12)}
+    .area-art{height:110px;background-size:cover;background-position:center;position:relative;border-bottom:1px solid var(--ink)}
+    .area-art .aname{position:absolute;left:14px;bottom:10px;font-size:22px;font-weight:900;color:#f5efe2;text-shadow:0 2px 8px rgba(28,26,23,.6);letter-spacing:.1em}
+    .area-art .adot{position:absolute;right:16px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(191,58,43,.25)}
+
+    .budget-bar{height:20px;display:flex;align-items:center;padding-left:8px;color:#f5efe2;font-size:12px;font-weight:600;min-width:90px;transition:width .5s cubic-bezier(.16,1,.3,1)}
+
+    /* ---- 表格（报刊式） ---- */
+    .jtable{width:100%;border-collapse:collapse;font-size:14px}
+    .jtable thead th{font-size:12px;letter-spacing:.2em;color:var(--muted);font-weight:500;text-align:left;padding:0 8px 12px}
+    .jtable thead tr{border-bottom:2px solid var(--ink)}
+    .jtable tbody td{padding:14px 8px;border-bottom:1px solid var(--hair-soft);vertical-align:top}
+    .jtable tbody tr:last-child td{border-bottom:2px solid var(--ink)}
+    .dark .jtable thead tr{border-bottom-color:var(--paper-on-ink)}
+    .dark .jtable tbody td{border-bottom-color:var(--hair-on-ink)}
+    .dark .jtable tbody tr:last-child td{border-bottom-color:var(--paper-on-ink)}
+
+    /* ---- 章节标题 ---- */
+    .sec-title{font-size:clamp(26px,3.6vw,42px);font-weight:900;letter-spacing:.04em}
+    .sec-title .mid{color:var(--red);padding:0 .15em}
+
+    /* ---- 弹窗 / Toast ---- */
+    .modal-mask{position:fixed;inset:0;background:rgba(28,26,23,.55);z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal-box{background:var(--paper-card);border:2px solid var(--ink);border-radius:2px;max-width:520px;width:100%;padding:28px;max-height:90vh;overflow:auto;box-shadow:8px 8px 0 rgba(28,26,23,.25)}
+    .toast-item{animation:toastIn .3s cubic-bezier(.16,1,.3,1)}
+    @keyframes toastIn{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+    [v-cloak]{display:none}
+
+    /* ---- 页脚水印 ---- */
+    .watermark{position:absolute;right:2%;bottom:-4%;font-size:clamp(120px,18vw,240px);font-weight:900;color:rgba(239,233,219,.05);letter-spacing:.1em;pointer-events:none;user-select:none;line-height:1}
+</style>
+</head>
+<body>
+<div id="app" v-cloak style="position:relative;z-index:1">
+
+  <!-- ======== 报头 ======== -->
+  <div class="masthead-top">
+    <div class="wrap py-2 flex items-center justify-between">
+      <a href="../" class="kicker" style="text-decoration:none;color:var(--red);letter-spacing:.18em">← 返回特刊首页</a>
+      <span class="kicker">香港 · GANG JU TONG · 湾区置业特刊</span>
+    </div>
+  </div>
+  <div class="masthead">
+    <div class="wrap py-6 flex items-end justify-between gap-6 flex-wrap">
+      <div class="flex items-center gap-4">
+        <span class="seal" style="width:46px;height:46px;font-size:24px">港</span>
+        <div>
+          <div class="masthead-title">港居通</div>
+          <div class="masthead-en mt-1.5">GANG JU TONG — A FIELD GUIDE FOR NEW ARRIVALS</div>
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="note">{{ dateStr }} · 香港</div>
+        <div class="note mt-1" style="color:var(--red)">丙午年 · 湾区置业特刊 · 第肆拾柒期</div>
+        <div class="mt-3 flex items-center gap-2 justify-end">
+          <span class="tag sans !text-[11px]" :style="amapReady ? 'color:#3b6d11;border-color:#3b6d11' : 'color:#b45309;border-color:#b45309'">
+            <span class="dot" :style="amapReady ? 'background:#3b6d11' : 'background:#d97706'"></span>
+            {{ amapReady ? '高德已就绪' : '高德未配置' }}
+          </span>
+          <button class="btn btn-line !py-1.5 !px-3 !text-xs" @click="openSettings"><i class="fa-solid fa-gear"></i>设置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== 导航 ======== -->
+  <nav class="nav-bar">
+    <div class="wrap flex gap-7 overflow-x-auto">
+      <span v-for="n in navItems" :key="n.id" class="navlink" :class="{active:nav===n.id}" @click="goTo(n.id)">
+        <span v-if="n.num" class="nnum">第{{ n.num }}式 · </span>{{ n.label }}
+      </span>
+    </div>
+  </nav>
+
+  <!-- ======== 导览 / Hero ======== -->
+  <section id="sec-guide">
+    <div class="wrap pt-14 pb-10 grid lg:grid-cols-12 gap-10 items-start">
+      <div class="lg:col-span-7">
+        <div class="kicker mb-6">FIELD NOTES · 新来港人才置业指南</div>
+        <h1 class="sec-title" style="font-size:clamp(44px,6.5vw,84px);line-height:1.22">
+          先<span style="color:var(--red)">安顿</span>，<br/>再<span style="color:var(--red)">安居</span>。
+        </h1>
+        <div class="relative mt-8 max-w-xl" style="padding:6px 30px">
+          <span style="position:absolute;left:0;top:0;color:var(--red);font-size:22px;font-weight:700">「</span>
+          <p class="text-[15px] leading-8" style="color:var(--ink-2)">
+            把通勤、校网、预算与资格，摊在同一张版面上。港居通将内地新来港人才最常问的六件事，做成一份可以交互的置业特刊——先算清楚每天的地铁与楼价，再决定把生活落在哪一区。
+          </p>
+          <span style="position:absolute;right:0;bottom:0;color:var(--red);font-size:22px;font-weight:700">」</span>
+        </div>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <button class="btn btn-red" @click="goTo('smart')"><i class="fa-solid fa-wand-magic-sparkles"></i>开始智能选房</button>
+          <button class="btn btn-line" @click="goTo('commute')"><i class="fa-solid fa-route"></i>先算通勤</button>
+        </div>
+      </div>
+      <div class="lg:col-span-5">
+        <div class="area-art" style="height:220px;border:1px solid var(--ink)" :style="'background-image:'+inkArt(7)"></div>
+        <div class="flex justify-between mt-2 note"><span>维港两岸 · 水墨示意</span><span>图一</span></div>
+        <div class="rule-double rule-double-b mt-6 py-4 grid grid-cols-3 gap-3 text-center">
+          <div><div class="text-2xl font-black">{{ areas.length || 18 }}</div><div class="note mt-1">区 · 首批画像</div></div>
+          <div><div class="text-2xl font-black" style="color:var(--red)">3</div><div class="note mt-1">分钟 · 通勤速算</div></div>
+          <div><div class="text-2xl font-black">02·28</div><div class="note mt-1">撤辣后口径</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 六栏导览 -->
+    <div class="wrap pb-16">
+      <div class="grid sm:grid-cols-3 lg:grid-cols-6" style="border:1px solid var(--ink)">
+        <div v-for="n in navItems.slice(1)" :key="'g'+n.id" class="p-5 cursor-pointer transition-colors hover:bg-[#1c1a17] hover:text-[#efe9db] group" style="border-right:1px solid var(--hair-soft);border-bottom:1px solid var(--hair-soft)" @click="goTo(n.id)">
+          <div class="text-4xl font-black" style="font-family:'Noto Serif SC',serif">第{{ n.num }}式</div>
+          <div class="flex items-center gap-2 mt-3 font-bold text-sm tracking-widest"><span class="sq"></span>{{ n.label }}</div>
+          <div class="text-xs mt-2 leading-5" style="color:var(--muted)">{{ n.desc }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 第零式 · 智能选房 ======== -->
+  <section id="sec-smart" class="py-14" style="background:var(--paper-deep);border-block:1px solid var(--hair)">
+    <div class="wrap">
+      <div class="flex items-end justify-between flex-wrap gap-3 mb-8">
+        <h2 class="sec-title">第零式<span class="mid">·</span>智能选房</h2>
+        <span class="note">把感性需求变成筛选标签 · 系统按匹配度荐区</span>
+      </div>
+
+      <div class="panel p-6 mb-8">
+        <div class="grid md:grid-cols-3 gap-6 mb-5">
+          <div v-for="g in filterGroups" :key="g.id" class="pb-4" style="border-bottom:1px solid var(--hair-soft)">
+            <div class="flex items-center gap-2 mb-3 font-bold text-sm tracking-widest"><span class="sq"></span><i :class="'fa-solid '+g.icon" style="color:var(--red)"></i>{{ g.name }}</div>
+            <div class="flex flex-wrap gap-2">
+              <button v-for="o in g.options" :key="o.id" class="chip !py-1.5 !px-3 !text-xs sans" :class="{on:smartSel[g.id].includes(o.id)}" @click="toggleTag(g.id, o.id)">{{ o.name }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <div class="flex items-center gap-2 mb-3 font-bold text-sm tracking-widest"><span class="sq"></span><i class="fa-solid fa-sack-dollar" style="color:var(--red)"></i>预算区间</div>
+            <div class="flex flex-wrap gap-2">
+              <button v-for="b in budgetPresets" :key="b.id" class="chip !py-1.5 !px-3 !text-xs sans" :class="{on:budgetSel===b.id}" @click="budgetSel = (budgetSel===b.id?'':b.id)">{{ b.name }}</button>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-3 font-bold text-sm tracking-widest"><span class="sq"></span><i class="fa-solid fa-ruler-combined" style="color:var(--red)"></i>户型偏好</div>
+            <div class="flex flex-wrap gap-2">
+              <button v-for="l in layoutPrefs" :key="l.id" class="chip !py-1.5 !px-3 !text-xs sans" :class="{on:layoutSel===l.id}" @click="layoutSel = (layoutSel===l.id?'':l.id)">{{ l.name }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button class="btn btn-red" @click="runSmart"><i class="fa-solid fa-wand-magic-sparkles"></i>生成推荐</button>
+          <button class="btn btn-line" @click="resetSmart"><i class="fa-solid fa-rotate-left"></i>重置</button>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-5 gap-6 items-start">
+        <div class="lg:col-span-3 relative">
+          <div class="map-box" id="map-smart"></div>
+          <div v-if="!amapReady" class="map-cover">
+            <i class="fa-solid fa-key text-2xl" style="color:var(--red)"></i>
+            <div class="font-bold">配置高德 Key 后启用偏好地图</div>
+            <div class="text-xs sans" style="color:var(--muted)">右上角「设置」填写 JS API Key，保存后自动加载</div>
+          </div>
+          <div class="absolute top-3 left-3 panel px-3.5 py-2.5 text-[11px] sans z-10 space-y-1">
+            <div class="font-bold tracking-widest">匹配度</div>
+            <div class="flex items-center gap-1.5"><span class="dot" style="background:#bf3a2b"></span>≥80 高</div>
+            <div class="flex items-center gap-1.5"><span class="dot" style="background:#1c1a17"></span>60–79</div>
+            <div class="flex items-center gap-1.5"><span class="dot" style="background:#b45309"></span>40–59</div>
+            <div class="flex items-center gap-1.5"><span class="dot" style="background:#a39e93"></span>&lt;40 低</div>
+          </div>
+        </div>
+        <div class="lg:col-span-2 space-y-5">
+          <div v-if="smartActiveArea" class="panel p-5">
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold tracking-widest"><i class="fa-solid fa-location-crosshairs mr-1.5" style="color:var(--red)"></i>{{ smartActiveArea.name }} · 生活圈</span>
+              <select class="input !w-auto !py-1 !text-xs sans" v-model="lifeRadius" @change="refreshLifeCircle">
+                <option :value="1">1 km</option><option :value="3">3 km</option><option :value="5">5 km</option>
+              </select>
+            </div>
+            <div v-if="loadingLife" class="text-sm py-2 sans" style="color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> 检索 {{ lifeRadius }}km 生活圈…</div>
+            <div v-else-if="lifeStats.length" class="flex gap-2 flex-wrap">
+              <span v-for="s in lifeStats" :key="s.id" class="tag sans" :style="'color:'+s.color+';border-color:'+s.color"><i :class="'fa-solid '+s.icon"></i>{{ s.name }} <b>{{ s.count }}</b></span>
+            </div>
+            <p class="text-[11px] mt-3 sans" style="color:var(--muted)"><i class="fa-solid fa-circle-info"></i> 同心圆 = {{ lifeRadius }}km 生活半径；点击地图区域圈或推荐卡片可切换区域</p>
+          </div>
+          <div class="panel p-5">
+            <div class="flex items-center justify-between mb-3 pb-3" style="border-bottom:2px solid var(--ink)">
+              <h3 class="font-bold tracking-widest">推荐排行 <span class="text-xs font-normal" style="color:var(--muted)">({{ smartResults.length }} 区)</span></h3>
+              <span v-if="smartRan" class="note">按匹配度排序</span>
+            </div>
+            <div v-if="!smartResults.length" class="text-sm py-8 text-center sans" style="color:var(--muted)">
+              <i class="fa-solid fa-sliders text-2xl block mb-3" style="color:#c9c2b2"></i>
+              勾选偏好标签后点击「生成推荐」
+            </div>
+            <div v-else class="max-h-[520px] overflow-y-auto">
+              <div v-for="(r,i) in smartResults" :key="r.area.id" class="rowline" :class="{sel:smartActive===r.area.id}" @click="selectSmart(r)">
+                <div class="rank-num" :style="'color:'+smartScoreColor(r.score)">{{ i+1 }}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold text-sm">{{ r.area.name }}</span>
+                    <span class="text-xs sans" style="color:var(--muted)">{{ fmtWan(r.area.pricePerFt/10000) }} 万/呎</span>
+                  </div>
+                  <div class="pbar mt-2"><div :style="{width:r.score+'%', background:smartScoreColor(r.score)}"></div></div>
+                  <div class="flex flex-wrap gap-1 mt-2">
+                    <span v-for="h in r.hitTags" :key="h.group+h.id" class="tag !text-[11px] sans">{{ labelName(h.group,h.id) }}</span>
+                    <span v-if="r.budgetHit" class="tag !text-[11px] sans" style="color:#92400e;border-color:#92400e">预算匹配</span>
+                    <span v-if="r.layoutHit" class="tag !text-[11px] sans" style="color:#0369a1;border-color:#0369a1">户型匹配</span>
+                  </div>
+                  <div v-if="smartActive===r.area.id && r.area.strengths" class="mt-2 space-y-1">
+                    <div v-for="(s,si) in r.area.strengths" :key="si" class="flex gap-1.5 text-xs sans" style="color:#92400e"><i class="fa-solid fa-medal mt-0.5 flex-none" style="color:var(--red)"></i>{{ s }}</div>
+                  </div>
+                </div>
+                <div class="text-right flex-none">
+                  <div class="font-black text-xl" :style="'color:'+smartScoreColor(r.score)">{{ r.score }}</div>
+                  <div class="text-[11px] sans" style="color:var(--muted)">匹配度</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 第壹式 · 资格速查 ======== -->
+  <section id="sec-qualify" class="py-14">
+    <div class="wrap">
+      <div class="flex items-end justify-between flex-wrap gap-3 mb-8">
+        <h2 class="sec-title">第壹式<span class="mid">·</span>资格速查</h2>
+        <span class="note">以 2024-02-28 撤辣后为准 · 单位：港元</span>
+      </div>
+      <div class="grid lg:grid-cols-2 gap-6 items-start">
+        <div class="space-y-6">
+          <div class="panel p-6">
+            <div class="flex items-center gap-2 mb-5 pb-3" style="border-bottom:2px solid var(--ink)">
+              <i class="fa-solid fa-circle-check" style="color:var(--red)"></i>
+              <h3 class="font-bold tracking-widest">三道选择题 · 判定税费方案</h3>
+            </div>
+            <div v-for="(q,qi) in tax.questions" :key="q.id" class="mb-5 last:mb-0">
+              <div class="flex items-center gap-2 text-sm font-bold mb-2.5"><span class="nnum" style="color:var(--red)">{{ ['一','二','三'][qi] || qi+1 }}</span>{{ q.title }}</div>
+              <div class="grid sm:grid-cols-3 gap-2">
+                <button v-for="o in q.options" :key="o.value" class="opt-btn sans" :class="{on:answers[q.id]===o.value}" @click="answers[q.id]=o.value">{{ o.label }}</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-ink p-6 dark">
+            <div class="flex items-center gap-2 mb-4 pb-3" style="border-bottom:1px solid var(--hair-on-ink)">
+              <i class="fa-solid fa-calculator" style="color:#f0b3a8"></i>
+              <h3 class="font-bold tracking-widest">印花税估算</h3>
+            </div>
+            <div class="flex items-end justify-between gap-4 flex-wrap">
+              <div class="flex-1 min-w-[180px]">
+                <label class="text-xs mb-2 block sans" style="color:rgba(239,233,219,.6)">楼价（万港元）</label>
+                <input type="number" class="input" v-model.number="priceInput" min="50" max="20000" />
+              </div>
+              <div class="text-right">
+                <div class="font-black" style="font-size:clamp(32px,4vw,48px);line-height:1;color:#f0b3a8">{{ fmtWan(stampDuty) }} <span class="text-base">万</span></div>
+                <div class="text-xs mt-1.5 sans" style="color:rgba(239,233,219,.6)">{{ stampDutyLabel }}</div>
+              </div>
+            </div>
+            <input type="range" class="w-full mt-5" min="100" max="3000" step="50" v-model.number="priceInput"/>
+            <div class="flex justify-between text-xs mt-1 sans" style="color:rgba(239,233,219,.5)"><span>100万</span><span>3000万</span></div>
+          </div>
+
+          <div class="panel p-6">
+            <div class="flex items-center gap-2 mb-4 pb-3" style="border-bottom:2px solid var(--ink)">
+              <i class="fa-solid fa-landmark" style="color:var(--red)"></i>
+              <h3 class="font-bold tracking-widest">{{ tax.policy.title }}</h3>
+            </div>
+            <ul class="space-y-2 text-sm sans" style="color:var(--ink-2)">
+              <li v-for="(it,ii) in tax.policy.items" :key="ii" class="flex gap-2"><i class="fa-solid fa-circle-minus mt-1 flex-none text-xs" style="color:var(--red)"></i>{{ it }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div v-if="scenario" class="panel p-6" :style="'border-top:5px solid '+scenario.color">
+            <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+              <div class="flex items-center gap-2.5">
+                <span class="font-black text-lg">{{ scenario.title }}</span>
+                <span class="tag sans" :style="'color:'+scenario.color+';border-color:'+scenario.color">{{ scenario.level }}</span>
+              </div>
+              <span class="note sans"><i class="fa-solid fa-clock"></i> 政策时效：2024-02-28 撤辣后</span>
+            </div>
+            <p class="text-sm mb-4 leading-7 sans" style="color:var(--ink-2)">{{ scenario.summary }}</p>
+            <ul class="space-y-2 mb-4">
+              <li v-for="(d,di) in scenario.details" :key="di" class="flex gap-2 text-sm sans"><i class="fa-solid fa-check mt-0.5 flex-none" style="color:#3b6d11"></i>{{ d }}</li>
+            </ul>
+            <div class="flex flex-wrap gap-2">
+              <span v-for="(tip,ti) in scenario.tips" :key="ti" class="tag sans" style="color:#92400e;border-color:#92400e"><i class="fa-solid fa-lightbulb"></i>{{ tip }}</span>
+            </div>
+          </div>
+          <div v-else class="panel p-10 text-center" style="color:var(--muted)">
+            <i class="fa-solid fa-stamp text-3xl mb-4 block" style="color:#c9c2b2"></i>
+            完成左侧 3 道题后，此处显示你的税费方案（BSD / NRSD 撤辣后政策）。
+          </div>
+
+          <div class="panel p-6">
+            <div class="flex items-center gap-2 mb-4 pb-3" style="border-bottom:2px solid var(--ink)">
+              <i class="fa-solid fa-sack-dollar" style="color:var(--red)"></i>
+              <h3 class="font-bold tracking-widest">按揭与持有成本</h3>
+            </div>
+            <div class="text-xs mb-3 sans" style="color:var(--muted)">{{ tax.mortgage.note }}</div>
+            <table class="jtable sans mb-4">
+              <thead><tr><th>情况</th><th>最高按揭</th><th>备注</th></tr></thead>
+              <tbody>
+                <tr v-for="r in tax.mortgage.rules" :key="r.case">
+                  <td>{{ r.case }}</td><td class="font-bold" style="color:var(--ink)">{{ r.maxLtv }}</td><td class="text-xs" style="color:var(--muted)">{{ r.note }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="text-xs mb-3 sans" style="color:var(--muted)"><i class="fa-solid fa-circle-info"></i> {{ tax.mortgage.rateNote }}</div>
+            <div>
+              <div v-for="c in tax.holdingCosts" :key="c.name" class="flex justify-between gap-4 text-sm py-2.5" style="border-bottom:1px solid var(--hair-soft)">
+                <span class="font-bold flex-none">{{ c.name }}</span><span class="text-xs text-right sans" style="color:var(--muted)">{{ c.note }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 第贰式 · 通勤计算（黑底反白） ======== -->
+  <section id="sec-commute" class="py-16 dark" style="background:var(--ink);color:var(--paper-on-ink)">
+    <div class="wrap">
+      <div class="flex items-end justify-between flex-wrap gap-3 mb-8">
+        <h2 class="sec-title" style="color:var(--paper-on-ink)">第贰式<span class="mid">·</span>通勤计算</h2>
+        <span class="note" style="color:rgba(239,233,219,.55)">门到门 · 全港 {{ areas.length }} 区对比</span>
+      </div>
+
+      <div class="panel-ink p-6 mb-8" style="background:rgba(239,233,219,.04);box-shadow:none">
+        <div class="flex flex-wrap items-end gap-4">
+          <div class="flex-1 min-w-[240px]">
+            <label class="text-xs mb-2 block sans" style="color:rgba(239,233,219,.6)">工作地（POI 搜索）</label>
+            <div class="relative">
+              <input class="input" v-model="workKw" @keyup.enter="searchWork" placeholder="如：中环国际金融中心 / 鰂鱼涌太古坊 / 深圳前海" />
+              <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2" style="color:rgba(239,233,219,.5)"></i>
+            </div>
+            <div v-if="workSuggestions.length" class="absolute z-30 mt-1 panel overflow-hidden w-full max-w-xl">
+              <div v-for="(s,i) in workSuggestions" :key="i" class="px-4 py-2.5 text-sm cursor-pointer hover:bg-[rgba(28,26,23,.05)] flex items-center gap-2 sans" style="color:var(--ink)" @click="pickWork(s)">
+                <i class="fa-solid fa-location-dot text-xs" style="color:var(--red)"></i>{{ s.name }}<span class="text-xs" style="color:var(--muted)">{{ s.adname || s.district }}</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs mb-2 block sans" style="color:rgba(239,233,219,.6)">搜索范围</label>
+            <select class="input !w-auto" v-model="workCity">
+              <option value="香港">香港</option><option value="深圳">深圳</option><option value="">不限城市</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs mb-2 block sans" style="color:rgba(239,233,219,.6)">出行方式</label>
+            <div class="flex gap-2">
+              <button v-for="m in commuteModes" :key="m.id" class="chip" :class="{on:mode===m.id}" :style="mode===m.id ? 'background:var(--red);border-color:var(--red);color:#f5efe2' : ''"><i :class="m.icon"></i>{{ m.name }}</button>
+            </div>
+          </div>
+          <button class="btn btn-red" :disabled="commuting" @click="runCommute"><i :class="commuting?'fa-solid fa-spinner fa-spin':'fa-solid fa-route'"></i>{{ commuting ? '计算中…' : (commuteResults.length ? '重新计算' : '开始计算') }}</button>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center gap-2 text-xs sans" style="color:rgba(239,233,219,.55)">
+          <i class="fa-solid fa-circle-info"></i>
+          门到门 = 区域中心 → 工作地。港铁模式基于高德公交规划（含港铁），逐个区域估算，约需 20 秒；驾车模式更快。
+          <span v-if="workPoi" class="tag sans" style="color:#f0b3a8;border-color:#f0b3a8"><i class="fa-solid fa-location-dot"></i>{{ workPoi.name }}</span>
+        </div>
+        <div v-if="commuting" class="mt-4">
+          <div class="pbar"><div :style="{width:progressPct+'%'}"></div></div>
+          <div class="mt-1.5 text-xs sans" style="color:rgba(239,233,219,.6)">{{ progressText }}</div>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 items-start">
+        <div class="relative">
+          <div class="map-box" id="map-commute" style="border-color:var(--hair-on-ink)"></div>
+          <div v-if="!amapReady" class="map-cover">
+            <i class="fa-solid fa-key text-2xl" style="color:var(--red)"></i>
+            <div class="font-bold" style="color:var(--ink)">配置高德 Key 后启用通勤地图</div>
+            <div class="text-xs sans" style="color:var(--muted)">右上角「设置」填写 JS API Key，保存后自动加载</div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-3 pb-3" style="border-bottom:2px solid var(--paper-on-ink)">
+            <h3 class="font-bold tracking-widest">推荐区域 · 按通勤时间排序</h3>
+            <button v-if="commuteResults.length" class="btn btn-line-light !py-1.5 !px-3 !text-xs sans" @click="exportCommuteCSV"><i class="fa-solid fa-table"></i>下载表格</button>
+          </div>
+          <div v-if="!commuteResults.length" class="p-10 text-center" style="color:rgba(239,233,219,.55);border:1px solid var(--hair-on-ink)">
+            <i class="fa-solid fa-map-location-dot text-3xl mb-4 block" style="color:rgba(239,233,219,.3)"></i>
+            <span class="sans text-sm">输入工作地后点击「开始计算」，将对比全港 {{ areas.length }} 区的门到门通勤时间。</span>
+          </div>
+          <div v-else class="max-h-[560px] overflow-y-auto">
+            <div v-for="(r,i) in commuteSorted" :key="r.area.id" class="rowline" :class="{sel:selArea===r.area.id}" @click="selectCommute(r)">
+              <div class="rank-num" :style="r.best ? 'color:#f0b3a8' : 'color:var(--paper-on-ink)'">{{ i+1 }}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-sm">{{ r.area.name }}</span>
+                  <span v-if="r.best" class="tag sans" style="color:#f0b3a8;border-color:#f0b3a8"><i class="fa-solid fa-crown"></i>最省时</span>
+                </div>
+                <div class="text-xs mt-1 truncate sans" style="color:rgba(239,233,219,.55)">{{ r.detail }}</div>
+              </div>
+              <div class="text-right flex-none">
+                <div class="font-black text-lg" style="color:var(--paper-on-ink)">{{ fmtMin(r.time) }}</div>
+                <div class="text-xs sans" style="color:rgba(239,233,219,.55)">{{ r.distKm }} km</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 第叁式 · 区域画像 ======== -->
+  <section id="sec-areas" class="py-14">
+    <div class="wrap">
+      <div class="flex items-end justify-between flex-wrap gap-3 mb-4">
+        <h2 class="sec-title">第叁式<span class="mid">·</span>区域画像</h2>
+        <span class="note">{{ dataNote }}</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 mb-8 pb-5" style="border-bottom:2px solid var(--ink)">
+        <input class="input !w-60 sans" v-model="areaQuery" placeholder="搜索区域 / 别名 / 标签…" />
+        <div class="flex gap-2 ml-auto">
+          <button class="btn btn-line !py-2 !text-xs sans" @click="exportAreasCSV"><i class="fa-solid fa-table"></i>下载表格</button>
+          <button class="btn btn-red !py-2 !text-xs sans" @click="exportAreasPNG"><i class="fa-solid fa-image"></i>导出图片</button>
+        </div>
+      </div>
+      <div id="area-grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5" style="background:var(--paper)">
+        <div v-for="(a,ai) in filteredAreas" :key="a.id" class="area-card">
+          <div class="area-art" :style="'background-image:'+inkArt(ai+3)">
+            <span class="adot"></span>
+            <span class="aname">{{ a.name }}</span>
+          </div>
+          <div class="p-5">
+            <div class="flex items-start justify-between gap-2 mb-3">
+              <div class="text-xs sans" style="color:var(--muted)">{{ a.en }} · {{ a.schoolNet }}</div>
+              <div class="text-right flex-none">
+                <div class="font-black text-xl" style="color:var(--red)">{{ fmtWan(a.pricePerFt/10000) }} <span class="text-xs font-normal" style="color:var(--muted)">万/呎</span></div>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-1.5 mb-4">
+              <span v-for="t in a.tags" :key="t" class="tag sans">{{ t }}</span>
+            </div>
+            <div class="text-[13px] space-y-2 mb-4 sans" style="color:var(--ink-2)">
+              <div class="flex gap-2"><i class="fa-solid fa-train-subway mt-1 flex-none text-xs" style="color:var(--red)"></i>{{ a.commute }}</div>
+              <div class="flex gap-2"><i class="fa-solid fa-school mt-1 flex-none text-xs" style="color:var(--red)"></i>{{ a.schoolNote }}</div>
+              <div class="flex gap-2"><i class="fa-solid fa-road mt-1 flex-none text-xs" style="color:var(--red)"></i>{{ a.infra }}</div>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs mb-2 sans" style="color:var(--muted)">内地生活便利度
+              <span class="ml-1 text-sm" style="color:var(--red)">
+                <i v-for="n in 5" :key="n" :class="n<=a.livability ? 'fa-solid fa-star' : 'fa-regular fa-star'"></i>
+              </span>
+            </div>
+            <p class="text-[13px] leading-6 mb-4 sans" style="color:var(--muted)">{{ a.desc }}</p>
+            <div class="flex gap-2">
+              <button class="btn btn-ink flex-1 !py-2 !text-xs sans" @click="viewAreaOnMap(a)"><i class="fa-solid fa-map-location-dot"></i>在地图查看</button>
+              <button class="btn btn-line !py-2 !text-xs sans" @click="showMtrNear(a)"><i class="fa-solid fa-train-subway"></i>港铁站</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 第肆式 · 生活地图 ======== -->
+  <section id="sec-lifemap" class="py-14" style="background:var(--paper-deep);border-block:1px solid var(--hair)">
+    <div class="wrap">
+      <div class="flex items-end justify-between flex-wrap gap-3 mb-8">
+        <h2 class="sec-title">第肆式<span class="mid">·</span>生活地图</h2>
+        <span class="note">普通话友好 · 生活配套 POI 图层</span>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6 items-start">
+        <div class="md:col-span-2 relative">
+          <div class="map-box" id="map-life"></div>
+          <div v-if="!amapReady" class="map-cover">
+            <i class="fa-solid fa-key text-2xl" style="color:var(--red)"></i>
+            <div class="font-bold">配置高德 Key 后启用生活地图</div>
+            <div class="text-xs sans" style="color:var(--muted)">右上角「设置」填写 JS API Key，保存后自动加载</div>
+          </div>
+        </div>
+        <div class="space-y-6">
+          <div class="panel p-5">
+            <div class="flex items-center gap-2 mb-4 pb-3" style="border-bottom:2px solid var(--ink)">
+              <i class="fa-solid fa-layer-group" style="color:var(--red)"></i>
+              <h3 class="font-bold tracking-widest">生活图层</h3>
+            </div>
+            <div class="space-y-2.5">
+              <button v-for="layer in poiLayers" :key="layer.id" class="layer-row sans" :class="{on:layerOn[layer.id]}" :style="layerOn[layer.id] ? 'background:'+layer.color+';border-color:'+layer.color : ''" @click="toggleLayer(layer)">
+                <span class="dot" :style="'background:'+(layerOn[layer.id]?'#fff':layer.color)"></span>
+                <i :class="'fa-solid '+layer.icon" :style="layerOn[layer.id]?'color:#fff':'color:'+layer.color"></i>
+                <span class="flex-1 text-left">{{ layer.name }}</span>
+                <span v-if="loadingLayer===layer.id"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                <span v-else class="text-xs" :style="layerOn[layer.id]?'color:rgba(255,255,255,.85)':'color:var(--muted)'">{{ poiCount(layer.id) }}</span>
+              </button>
+            </div>
+            <p class="text-xs mt-4 leading-6 sans" style="color:var(--muted)">
+              <i class="fa-solid fa-circle-info"></i> 数据来自高德 POI 检索（city=香港）。「普通话服务」为关键词图层，其余按 POI 分类码叠加。开启图层后点击标记查看详情。
+            </p>
+          </div>
+          <div class="panel p-5">
+            <div class="flex items-center gap-2 mb-4 pb-3" style="border-bottom:2px solid var(--ink)">
+              <i class="fa-solid fa-list" style="color:var(--red)"></i>
+              <h3 class="font-bold tracking-widest">POI 明细</h3>
+            </div>
+            <div v-if="!poiListShown.length" class="text-sm py-5 text-center sans" style="color:var(--muted)">开启任意图层后显示检索结果</div>
+            <div v-else class="max-h-[380px] overflow-y-auto">
+              <div v-for="(p,pi) in poiListShown" :key="pi" class="rowline !py-2.5" @click="focusPoi(p)">
+                <span class="dot" :style="'background:'+p.color"></span>
+                <div class="min-w-0 sans">
+                  <div class="font-bold text-sm truncate">{{ p.name }}</div>
+                  <div class="text-xs truncate" style="color:var(--muted)">{{ p.address || p.pname + ' ' + p.adname }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 第伍式 · 预算对比 ======== -->
+  <section id="sec-budget" class="py-14">
+    <div class="wrap">
+      <div class="flex items-end justify-between flex-wrap gap-3 mb-8">
+        <h2 class="sec-title">第伍式<span class="mid">·</span>预算对比</h2>
+        <span class="note">同预算 · 港陆面积换算</span>
+      </div>
+      <div class="grid lg:grid-cols-2 gap-6 items-start">
+        <div class="space-y-6">
+          <div class="panel p-6">
+            <div class="flex items-center gap-2 mb-5 pb-3" style="border-bottom:2px solid var(--ink)">
+              <i class="fa-solid fa-scale-balanced" style="color:var(--red)"></i>
+              <h3 class="font-bold tracking-widest">预算 → 面积换算</h3>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label class="text-xs mb-2 block sans" style="color:var(--muted)">总预算（万港元）</label>
+                <input type="number" class="input sans" v-model.number="budgetHKD" min="100" max="20000" />
+              </div>
+              <div>
+                <label class="text-xs mb-2 block sans" style="color:var(--muted)">目标区域每呎价（万港元/呎）</label>
+                <select class="input sans" v-model="perFtSel">
+                  <option v-for="a in areas" :key="a.id" :value="a.pricePerFt/10000">{{ a.name }} · {{ (a.pricePerFt/10000).toFixed(2) }} 万/呎</option>
+                </select>
+              </div>
+            </div>
+            <div class="rule-double rule-double-b py-4 grid grid-cols-3 gap-3 text-center">
+              <div><div class="text-2xl font-black">{{ fmtWan(budgetHKD*0.86) }} <span class="text-xs">万¥</span></div><div class="note mt-1">预算折人民币</div></div>
+              <div><div class="text-2xl font-black" style="color:var(--red)">{{ hkAreaSqm.toFixed(1) }} <span class="text-xs">㎡</span></div><div class="note mt-1">香港可购面积</div></div>
+              <div><div class="text-2xl font-black">{{ (hkAreaSqm*10.7639).toFixed(0) }} <span class="text-xs">呎</span></div><div class="note mt-1">≈ 实用面积</div></div>
+            </div>
+            <div class="text-xs leading-6 mt-4 sans" style="color:var(--muted)">
+              <i class="fa-solid fa-circle-info"></i> 换算：1 呎 = 0.0929 ㎡；汇率 <b>{{ exchangeRate }}</b> 港元→人民币（硬编码，可在 config.js 修改）。香港每呎价 → 每㎡人民币 = 呎价 × 10.76 × 汇率。
+            </div>
+          </div>
+          <div class="panel p-6">
+            <div class="flex items-center justify-between mb-5 pb-3" style="border-bottom:2px solid var(--ink)">
+              <h3 class="font-bold tracking-widest">同预算 · 内地城市面积对比</h3>
+              <button class="btn btn-red !py-1.5 !px-3 !text-xs sans" @click="exportBudgetPNG"><i class="fa-solid fa-image"></i>导出图片</button>
+            </div>
+            <div id="budget-chart" class="space-y-4" style="background:var(--paper-card)">
+              <div v-for="c in budgetRows" :key="c.name">
+                <div class="flex justify-between text-sm mb-1.5 sans">
+                  <span class="font-bold">{{ c.name }} <span class="text-xs font-normal" style="color:var(--muted)">≈ {{ c.price }} 万¥/㎡</span></span>
+                  <span class="text-xs font-bold" style="color:var(--muted)">{{ c.area }} ㎡</span>
+                </div>
+                <div class="pbar" style="height:20px"><div :style="{width:barPct(c.area), background:c.color}" class="budget-bar"></div></div>
+              </div>
+              <div class="pt-1 text-xs sans" style="color:var(--muted)">香港：{{ budgetHKD.toFixed(0) }} 万港元 ≈ {{ hkAreaSqm.toFixed(1) }} ㎡（参考均价，未计实用率折让）</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel p-6">
+          <div class="flex items-center gap-2 mb-2 pb-3" style="border-bottom:2px solid var(--ink)">
+            <i class="fa-solid fa-city" style="color:var(--red)"></i>
+            <h3 class="font-bold tracking-widest">内地主要城市参考均价</h3>
+          </div>
+          <div class="text-xs mb-3 sans" style="color:var(--muted)">二手房参考均价（2025，人民币/㎡，仅供参考）</div>
+          <table class="jtable sans">
+            <thead><tr><th>城市</th><th>参考均价</th><th>同预算可购</th></tr></thead>
+            <tbody>
+              <tr v-for="c in budgetRows" :key="c.name">
+                <td class="font-bold">{{ c.name }}</td>
+                <td>{{ c.price }} 万¥/㎡</td>
+                <td style="color:var(--red);font-weight:700">{{ c.area }} ㎡</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="text-center text-sm mt-8 leading-7" style="color:var(--ink-2)">买的是资产，租的是弹性——<br/>先想清楚七年后的自己，再下笔签哪份约。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 页脚 ======== -->
+  <footer class="relative overflow-hidden" style="background:var(--ink);color:var(--paper-on-ink)">
+    <div class="wrap relative" style="z-index:1">
+      <div class="flex items-center justify-between flex-wrap gap-5 py-9" style="border-bottom:1px solid var(--hair-on-ink)">
+        <div class="flex items-center gap-3">
+          <span class="seal" style="width:38px;height:38px;font-size:19px">港</span>
+          <div>
+            <div class="font-black text-lg tracking-widest">港居通</div>
+            <div class="text-[11px] sans" style="color:rgba(239,233,219,.55)">新来港人才的第一页</div>
+          </div>
+        </div>
+        <div class="flex gap-7 text-xs sans tracking-widest" style="color:rgba(239,233,219,.7)">
+          <span>关于本报</span><span>数据口径</span><span>私隐声明</span><span>使用条款</span><span>联络编辑部</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between flex-wrap gap-3 py-6 text-xs sans" style="color:rgba(239,233,219,.5)">
+        <div>
+          <p>港居通 GANG JU TONG · 2026 年出品 · 数据以官方公布为准，本刊内容仅供参考。</p>
+          <p class="mt-1.5">港居通 · 纯前端工具 · 数据来自高德地图 API 与本地静态文件，区域均价/校网/基建信息仅供选房规划参考，不构成投资建议。税费政策时效：2024-02-28 撤辣后（BSD / NRSD / SSD 已撤销）；具体以香港税务局与银行批核为准。</p>
+        </div>
+        <div class="font-bold tracking-widest" style="color:rgba(239,233,219,.7)">丙午年 · 湾区置业特刊</div>
+      </div>
+    </div>
+    <div class="watermark">安居</div>
+  </footer>
+
+  <!-- ======== 设置弹窗 ======== -->
+  <div v-if="showSettings" class="modal-mask" @click.self="showSettings=false">
+    <div class="modal-box">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-black text-lg tracking-widest"><i class="fa-solid fa-gear mr-2" style="color:var(--red)"></i>高德地图设置</h3>
+        <button class="w-8 h-8 hover:text-[#bf3a2b]" @click="showSettings=false"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-4 mb-5">
+        <div>
+          <label class="text-xs mb-1.5 block sans" style="color:var(--muted)">JS API Key（Web端）</label>
+          <input class="input sans" v-model.trim="cfgKey" placeholder="ak****" />
+        </div>
+        <div>
+          <label class="text-xs mb-1.5 block sans" style="color:var(--muted)">安全密钥 securityJsCode（选填）</label>
+          <input class="input sans" v-model.trim="cfgSjc" placeholder="申请 Key 时开启安全设置则填" />
+        </div>
+      </div>
+      <ol class="text-xs mb-6 space-y-1.5 p-4 sans" style="background:var(--paper-deep);color:var(--muted);border:1px solid var(--hair-soft)">
+        <li><b style="color:var(--red)">①</b> 打开高德开放平台 console.amap.com → 应用管理 → 创建「Web端(JS API)」应用</li>
+        <li><b style="color:var(--red)">②</b> 复制 Key 填入上方；若启用了 Key 安全设置，同时复制「安全密钥」</li>
+        <li><b style="color:var(--red)">③</b> 保存后页面自动重载地图。也可直接编辑 <code>config.js</code> 部署时固定生效</li>
+      </ol>
+      <div class="flex gap-2 justify-end">
+        <button class="btn btn-line" @click="showSettings=false">取消</button>
+        <button class="btn btn-ink" @click="saveSettings"><i class="fa-solid fa-floppy-disk"></i>保存并重载</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="fixed bottom-5 right-5 z-[90] space-y-2 w-80 max-w-[90vw]">
+    <div v-for="t in toasts" :key="t.id" class="toast-item panel px-4 py-3 text-sm sans flex gap-2 items-start" :style="'border-left:5px solid '+(t.type==='error'?'var(--red)':t.type==='warn'?'#d97706':'#3b6d11')">
+      <i class="fa-solid mt-0.5" :class="t.type==='error'?'fa-circle-exclamation':t.type==='warn'?'fa-triangle-exclamation':'fa-circle-check'" :style="'color:'+(t.type==='error'?'var(--red)':t.type==='warn'?'#d97706':'#3b6d11')"></i>
+      <span>{{ t.msg }}</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, reactive, computed, nextTick, watch } = Vue;
+const CFG = window.GJT_CONFIG || {};
+const EMBED = window.EMBED_DATA || {};
+
+const state = reactive({
+  nav: 'guide',
+  navItems: [
+    { id:'guide',   label:'导览',     num:'',  desc:'' },
+    { id:'smart',   label:'智能选房', num:'零', desc:'标签化需求，按匹配度荐区' },
+    { id:'qualify', label:'资格速查', num:'壹', desc:'三道题判定税费与按揭方案' },
+    { id:'commute', label:'通勤计算', num:'贰', desc:'门到门对比全港各区通勤' },
+    { id:'areas',   label:'区域画像', num:'叁', desc:'校网 · 交通 · 基建一览' },
+    { id:'lifemap', label:'生活地图', num:'肆', desc:'普通话友好与配套 POI 图层' },
+    { id:'budget',  label:'预算对比', num:'伍', desc:'同预算港陆面积换算' },
+  ],
+  dateStr: '',
+  areas: [], tax: { questions:[], policy:{ title:'', items:[] }, scenarios:[], avdRates:[], holdingCosts:[], mortgage:{ note:'', rules:[], rateNote:'' } }, poiLayers: [], dataNote: '数据加载中…', exchangeRate: CFG.exchangeRate || 0.86,
+  amapReady: false,
+  mapCommute: null, mapLife: null, mapSmart: null,
+  mapInitialized: { commute:false, lifemap:false, smart:false },
+  // smart 推荐
+  filterGroups: [
+    { id:'landscape', name:'景观与环境', icon:'fa-mountain-sun', options:[
+      { id:'sea', name:'望海' }, { id:'hill', name:'山景' }, { id:'park', name:'公园/绿化' } ]},
+    { id:'transport', name:'交通通勤', icon:'fa-train-subway', options:[
+      { id:'mtr_top', name:'地铁上盖' }, { id:'mtr_near', name:'近港铁' }, { id:'cross', name:'过海便利' }, { id:'hub', name:'铁路枢纽' } ]},
+    { id:'family', name:'教育与家庭', icon:'fa-school', options:[
+      { id:'school', name:'优质校网' }, { id:'mature', name:'成熟社区' }, { id:'intl', name:'国际学校' }, { id:'newdev', name:'新盘选择多' } ]},
+  ],
+  budgetPresets: [
+    { id:'b1', name:'500 万以下', lo:0, hi:500 },
+    { id:'b2', name:'500–800 万', lo:500, hi:800 },
+    { id:'b3', name:'800–1200 万', lo:800, hi:1200 },
+    { id:'b4', name:'1200–2000 万', lo:1200, hi:2000 },
+    { id:'b5', name:'2000 万以上', lo:2000, hi:99999 },
+  ],
+  layoutPrefs: [
+    { id:'small', name:'小户型 (≤600呎)', min:0, max:600 },
+    { id:'mid', name:'中户型 (600–1000呎)', min:600, max:1000 },
+    { id:'large', name:'大户型 (≥1000呎)', min:1000, max:99999 },
+  ],
+  smartSel: { landscape:[], transport:[], family:[] },
+  budgetSel: '', layoutSel: '',
+  smartRan: false, smartResults: [],
+  smartActive: null, lifeRadius: 3, lifeStats: [], loadingLife: false,
+  _smartCircles: [], _smartLabels: [], _lifeMarkers: [],
+  // key settings
+  showSettings:false, cfgKey:'', cfgSjc:'',
+  // commute
+  workKw:'', workCity:'香港', workSuggestions:[], workPoi:null,
+  mode:'transit',
+  commuteModes:[
+    { id:'transit', name:'港铁+公交', icon:'fa-solid fa-train-subway' },
+    { id:'driving', name:'驾车',      icon:'fa-solid fa-car' },
+    { id:'walking', name:'步行',      icon:'fa-solid fa-person-walking' },
+  ],
+  commuting:false, progress:0, progressText:'', commuteResults:[], selArea:null, selRoute:null,
+  // qualify
+  answers:{ q_identity:'', q_own:'', q_first:'' }, priceInput:800,
+  // lifemap
+  layerOn:{}, loadingLayer:'', poiResults:[], poiMarkers:{}, regionCircle:null, regionMarker:null,
+  // areas
+  areaQuery:'',
+  // budget
+  budgetHKD:800, perFtSel:1.5,   mainCities:[
+    { name:'深圳', price:5.8, color:'#bf3a2b' },
+    { name:'上海', price:6.2, color:'#8c7a4b' },
+    { name:'北京', price:6.5, color:'#55504a' },
+    { name:'广州', price:3.4, color:'#0f766e' },
+    { name:'杭州', price:3.6, color:'#3b6d11' },
+    { name:'武汉', price:1.6, color:'#b45309' },
+    { name:'成都', price:1.9, color:'#7c5c3e' },
+    { name:'长沙', price:1.15, color:'#8c8577' },
+  ],
+  toasts:[], _toastId:0,
+});
+
+/* ---------- 基础工具 ---------- */
+function toast(msg, type='ok'){
+  const id = ++state._toastId;
+  state.toasts.push({ id, msg, type });
+  setTimeout(()=>{ state.toasts = state.toasts.filter(t=>t.id!==id); }, 4200);
+}
+function fmtWan(v){ return (Math.round(v*100)/100).toLocaleString('zh-CN'); }
+function fmtMin(sec){ if(sec==null) return '--'; const m=Math.round(sec/60); return m>=60 ? Math.floor(m/60)+'小时'+(m%60 ? m%60+'分':'') : m+'分'; }
+
+/* ---------- 水墨插图生成 ---------- */
+function inkArt(n){
+  let s = (n+11)*9301+49297;
+  const rnd = ()=>{ s=(s*9301+49297)%233280; return s/233280; };
+  const w=400,h=160; let layers='';
+  const sun='<circle cx="'+(w*(0.68+rnd()*0.22)).toFixed(0)+'" cy="'+(26+rnd()*22).toFixed(0)+'" r="13" fill="#bf3a2b" opacity="0.9"/>';
+  const ops=[0.10,0.20,0.34];
+  for(let L=0;L<3;L++){
+    let pts='0,'+h; const base=h*(0.42+L*0.17);
+    for(let x=0;x<=w;x+=40){ const y=base-rnd()*46*(3-L)/3+L*5; pts+=' '+x+','+Math.max(8,y).toFixed(0); }
+    pts+=' '+w+','+h;
+    layers+='<polygon points="'+pts+'" fill="#1c1a17" opacity="'+ops[L]+'"/>';
+  }
+  const water='<rect y="'+(h-10)+'" width="'+w+'" height="10" fill="#1c1a17" opacity="0.12"/>';
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="xMidYMid slice"><rect width="'+w+'" height="'+h+'" fill="#e9e3d4"/>'+sun+layers+water+'</svg>';
+  return 'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
+}
+
+/* ---------- 数据加载（fetch JSON，失败降级 embed） ---------- */
+async function loadData(){
+  try{
+    const [a,t,p] = await Promise.all([
+      fetch('data/areas.json').then(r=>{ if(!r.ok) throw 0; return r.json(); }),
+      fetch('data/tax.json').then(r=>{ if(!r.ok) throw 0; return r.json(); }),
+      fetch('data/poi.json').then(r=>{ if(!r.ok) throw 0; return r.json(); }),
+    ]);
+    state.areas=a.areas; state.tax=t; state.poiLayers=p.layers;
+    state.dataNote = a.note;
+  }catch(e){
+    state.areas = (EMBED.areas && EMBED.areas.areas) || [];
+    state.tax = EMBED.tax || state.tax;
+    state.poiLayers = EMBED.poi || [];
+    state.dataNote = (EMBED.areas && EMBED.areas.note) || '';
+    toast('本地预览模式：使用内嵌数据。部署到服务器/GitHub Pages 后自动加载 data/*.json','warn');
+  }
+  if(state.areas.length){ state.perFtSel = state.areas[0].pricePerFt/10000; }
+}
+
+/* ---------- 高德 Key / 加载 ---------- */
+function amapKeys(){
+  const saved = JSON.parse(localStorage.getItem('gjt_amap_cfg')||'null');
+  return {
+    key: (saved&&saved.key) || CFG.jsKey || '',
+    sjc: (saved&&saved.sjc) || CFG.securityJsCode || '',
+  };
+}
+function ensureAMap(){
+  return new Promise((resolve, reject)=>{
+    if(window.AMap){ state.amapReady=true; resolve(); return; }
+    const { key, sjc } = amapKeys();
+    if(!key){ reject({ code:'NO_KEY' }); return; }
+    window._AMapSecurityConfig = { securityJsCode: sjc };
+    const s = document.createElement('script');
+    s.src = 'https://webapi.amap.com/maps?v=2.0&key='+key+'&plugin=AMap.Scale,AMap.ToolBar,AMap.PlaceSearch,AMap.Transfer,AMap.Driving,AMap.Walking,AMap.Geocoder';
+    s.onload = ()=>{ state.amapReady=true; resolve(); };
+    s.onerror = ()=>reject({ code:'LOAD_FAIL' });
+    document.head.appendChild(s);
+  });
+}
+function amapErr(e){
+  if(e && e.code==='NO_KEY'){ toast('请先配置高德 Key：右上角「设置」填写后保存','error'); return; }
+  toast('高德地图加载失败，请检查 Key 是否正确','error');
+}
+
+/* ---------- 地图初始化 ---------- */
+function initCommuteMap(){
+  const map = new AMap.Map('map-commute', { resizeEnable:true, zoom:11, center:[114.1694,22.3193], mapStyle:'amap://styles/fresh', viewMode:'2D' });
+  map.addControl(new AMap.Scale()); map.addControl(new AMap.ToolBar());
+  state.mapCommute = map; state.mapInitialized.commute = true;
+}
+function initLifeMap(){
+  const map = new AMap.Map('map-life', { resizeEnable:true, zoom:11, center:[114.1694,22.3193], mapStyle:'amap://styles/fresh', viewMode:'2D' });
+  map.addControl(new AMap.Scale()); map.addControl(new AMap.ToolBar());
+  state.mapLife = map; state.mapInitialized.lifemap = true;
+}
+function initSmartMap(){
+  const map = new AMap.Map('map-smart', { resizeEnable:true, zoom:11, center:[114.1694,22.3193], mapStyle:'amap://styles/fresh', viewMode:'2D' });
+  map.addControl(new AMap.Scale()); map.addControl(new AMap.ToolBar());
+  state.mapSmart = map; state.mapInitialized.smart = true;
+}
+async function ensureMap(kind){
+  try{ await ensureAMap(); }catch(e){ amapErr(e); return false; }
+  if(kind==='commute'){
+    if(!state.mapInitialized.commute) initCommuteMap();
+    else state.mapCommute.resize();
+  }else if(kind==='lifemap'){
+    if(!state.mapInitialized.lifemap) initLifeMap();
+    else state.mapLife.resize();
+  }else{
+    if(!state.mapInitialized.smart) initSmartMap();
+    else state.mapSmart.resize();
+  }
+  return true;
+}
+
+/* ---------- 报刊式长页导航 ---------- */
+function goTo(id){
+  state.nav = id;
+  const el = document.getElementById('sec-'+id);
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function setupObservers(){
+  if(!('IntersectionObserver' in window)) return;
+  const spy = new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){ state.nav = e.target.id.replace('sec-',''); } });
+  }, { rootMargin:'-25% 0px -65% 0px' });
+  state.navItems.forEach(n=>{ const el=document.getElementById('sec-'+n.id); if(el) spy.observe(el); });
+  const mo = new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting && state.amapReady){ ensureMap(e.target.getAttribute('data-map')); } });
+  }, { threshold:0.05 });
+  ['smart','commute','lifemap'].forEach(k=>{
+    const el=document.getElementById('map-'+k);
+    if(el){ el.setAttribute('data-map',k); mo.observe(el); }
+  });
+}
+
+/* ================= 〇 智能推荐引擎（标签匹配） ================= */
+function toggleTag(gid, oid){
+  const arr = state.smartSel[gid];
+  const i = arr.indexOf(oid);
+  if(i>=0) arr.splice(i,1); else arr.push(oid);
+  if(state.smartRan) runSmart(); // 勾选即实时重算
+}
+function labelName(group, id){
+  const g = state.filterGroups.find(x=>x.id===group);
+  return g ? ((g.options.find(o=>o.id===id)||{}).name || id) : id;
+}
+function smartScoreColor(s){ return s>=80?'#bf3a2b':s>=60?'#1c1a17':s>=40?'#b45309':'#a39e93'; }
+function runSmart(){
+  const sel = state.smartSel;
+  const total = (sel.landscape||[]).length + (sel.transport||[]).length + (sel.family||[]).length;
+  const budget = state.budgetPresets.find(b=>b.id===state.budgetSel) || null;
+  const layout = state.layoutPrefs.find(l=>l.id===state.layoutSel) || null;
+  const results = state.areas.map(a=>{
+    let hit = 0; const hitTags = [];
+    const addHit = (ids, group)=>{
+      (ids||[]).forEach(id=>{ if((sel[group]||[]).includes(id)){ hit++; hitTags.push({group, id}); } });
+    };
+    addHit(a.landscape, 'landscape');
+    addHit(a.transport, 'transport');
+    addHit(a.familyTags, 'family');
+    let budgetHit=false, layoutHit=false;
+    if(budget){
+      const ft = a.layoutSize||[500,1000];
+      const loP = a.pricePerFt/10000*ft[0], hiP = a.pricePerFt/10000*ft[1];
+      budgetHit = !(hiP < budget.lo || loP > budget.hi);
+      if(budgetHit) hit++;
+    }
+    if(layout){
+      const ft = a.layoutSize||[400,1000];
+      layoutHit = !(ft[1] < layout.min || ft[0] > layout.max);
+      if(layoutHit) hit++;
+    }
+    const max = total + (budget?1:0) + (layout?1:0);
+    const score = max ? Math.round(hit/max*100) : 50;
+    return { area:a, score, hitTags, budgetHit, layoutHit };
+  });
+  results.sort((x,y)=>y.score-x.score);
+  state.smartResults = results;
+  state.smartRan = true;
+  drawSmartMap();
+  const keep = state.smartActive ? results.find(r=>r.area.id===state.smartActive) : null;
+  if(keep) selectSmart(keep);
+  else if(results.length) selectSmart(results[0]);
+  toast('已按 '+(total?total+' 项标签':'默认排序')+'生成推荐');
+}
+function resetSmart(){
+  state.smartSel = { landscape:[], transport:[], family:[] };
+  state.budgetSel=''; state.layoutSel='';
+  state.smartRan=false; state.smartResults=[];
+  clearSmartOverlays();
+  toast('已重置筛选');
+}
+function clearSmartOverlays(){
+  const map = state.mapSmart; if(!map) return;
+  if(state._smartCircles.length){ map.remove(state._smartCircles); state._smartCircles=[]; }
+  if(state._smartLabels.length){ map.remove(state._smartLabels); state._smartLabels=[]; }
+  if(state.lifeCircle){ map.remove(state.lifeCircle); state.lifeCircle=null; }
+  if(state._lifeMarkers.length){ map.remove(state._lifeMarkers); state._lifeMarkers=[]; }
+  state.lifeStats=[]; state.smartActive=null;
+}
+async function drawSmartMap(){
+  if(!await ensureMap('smart')) return;
+  const map = state.mapSmart;
+  if(state._smartCircles.length){ map.remove(state._smartCircles); state._smartCircles=[]; }
+  if(state._smartLabels.length){ map.remove(state._smartLabels); state._smartLabels=[]; }
+  const circles=[], labels=[];
+  state.smartResults.forEach(r=>{
+    const c = smartScoreColor(r.score);
+    const circle = new AMap.Circle({ center:[r.area.lng,r.area.lat], radius:1600,
+      strokeColor:c, strokeWeight:2, strokeOpacity:.75, fillColor:c, fillOpacity:.15 });
+    circle.on('click', ()=>selectSmart(r));
+    const label = new AMap.Marker({ position:[r.area.lng,r.area.lat],
+      content:'<div style="background:'+c+';color:#fff;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.28);white-space:nowrap;cursor:pointer">'+r.area.name+' · '+r.score+'分</div>' });
+    label.on('click', ()=>selectSmart(r));
+    circles.push(circle); labels.push(label);
+  });
+  map.add(circles); map.add(labels);
+  state._smartCircles=circles; state._smartLabels=labels;
+  if(circles.length) map.setFitView(circles, false, [70,70,70,70], 12);
+}
+async function selectSmart(r){
+  if(!await ensureMap('smart')) return;
+  const map = state.mapSmart;
+  state.smartActive = r.area.id;
+  if(state.lifeCircle){ map.remove(state.lifeCircle); state.lifeCircle=null; }
+  if(state._lifeMarkers.length){ map.remove(state._lifeMarkers); state._lifeMarkers=[]; }
+  state.lifeStats=[];
+  const km = state.lifeRadius;
+  state.lifeCircle = new AMap.Circle({ center:[r.area.lng,r.area.lat], radius:km*1000,
+    strokeColor:'#bf3a2b', strokeWeight:2.5, strokeOpacity:.85, strokeStyle:'dashed',
+    fillColor:'#bf3a2b', fillOpacity:.05 });
+  map.add(state.lifeCircle);
+  map.setCenter([r.area.lng,r.area.lat]);
+  if(map.getZoom()<12) map.setZoom(12);
+  loadLifePois(r.area);
+}
+function refreshLifeCircle(){
+  const r = state.smartResults.find(x=>x.area.id===state.smartActive);
+  if(r) selectSmart(r);
+}
+const LIFE_POIS = [
+  { id:'mtr', name:'港铁站', type:'150500', icon:'fa-train-subway', color:'#2563eb' },
+  { id:'school', name:'学校', type:'141200', icon:'fa-school', color:'#7c3aed' },
+  { id:'mall', name:'商场', type:'060100', icon:'fa-cart-shopping', color:'#e11d48' },
+];
+function searchNearbyOnce(type, area, radius){
+  return new Promise(res=>{
+    const ps = new AMap.PlaceSearch({ type, city:'香港', pageSize:20, pageIndex:1 });
+    ps.searchNearBy('', [area.lng,area.lat], radius, (status,result)=>{
+      if(status==='complete' && result.poiList && result.poiList.pois) res(result.poiList.pois);
+      else res([]);
+    });
+  });
+}
+async function loadLifePois(area){
+  const map = state.mapSmart; if(!map) return;
+  state.loadingLife = true;
+  const radiusM = state.lifeRadius*1000;
+  const stats=[], allMarkers=[];
+  for(const L of LIFE_POIS){
+    let pois = await searchNearbyOnce(L.type, area, radiusM);
+    if(!pois.length && L.id==='mtr'){ // 港铁站降级：宽范围
+      pois = await searchNearbyOnce(L.type, area, radiusM+2000);
+    }
+    stats.push({ ...L, count:pois.length });
+    pois.filter(p=>p.location).forEach(p=>{
+      const [lng,lat]=p.location.split(',').map(Number);
+      allMarkers.push(new AMap.Marker({ position:[lng,lat],
+        content:'<div style="width:22px;height:22px;border-radius:50%;background:'+L.color+';color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.22)"><i class="fa-solid '+L.icon+'" style="font-size:9px"></i></div>' }));
+    });
+  }
+  if(allMarkers.length) map.add(allMarkers);
+  state._lifeMarkers = allMarkers;
+  state.lifeStats = stats;
+  state.loadingLife = false;
+  const total = stats.reduce((s,x)=>s+x.count,0);
+  toast(area.name+' '+state.lifeRadius+'km 生活圈：共 '+total+' 处 POI');
+}
+const smartActiveArea = computed(()=> state.areas.find(a=>a.id===state.smartActive) || null);
+
+/* ================= ① 通勤计算器 ================= */
+function searchWork(){
+  if(!state.workKw.trim()){ toast('请输入工作地', 'warn'); return; }
+  ensureAMap().then(()=>{
+    const doSearch = (city)=>{
+      return new Promise((res)=>{
+        const ps = new AMap.PlaceSearch({ city: city, pageSize: 8, pageIndex: 1, extensions:'base' });
+        ps.search(state.workKw.trim(), (status, result)=>{
+          if(status==='complete' && result.poiList && result.poiList.pois && result.poiList.pois.length) res(result.poiList.pois);
+          else res([]);
+        });
+      });
+    };
+    doSearch(state.workCity||undefined).then(pois=>{
+      if(!pois.length && state.workCity==='香港') return doSearch('HK');
+      return pois;
+    }).then(pois=>{
+      state.workSuggestions = pois.map(p=>({ name:p.name, adname:p.adname||p.district, location:p.location, address:p.address }));
+      if(!pois.length) toast('未找到匹配地点，试试更具体的名称','warn');
+    });
+  }).catch(amapErr);
+}
+function pickWork(s){
+  const [lng,lat] = s.location.split(',').map(Number);
+  state.workPoi = { name:s.name, lng, lat };
+  state.workKw = s.name; state.workSuggestions = [];
+  state.commuteResults = [];
+  const map = state.mapCommute;
+  if(map){
+    if(state._routeLine){ map.remove(state._routeLine); state._routeLine=null; }
+    if(state._areaMarkers){ map.remove(state._areaMarkers); state._areaMarkers=null; }
+    const mk = new AMap.Marker({ position:[lng,lat],
+      content:'<div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#bf3a2b;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.3)"><i class="fa-solid fa-briefcase" style="font-size:15px"></i></div>' });
+    map.add(mk);
+    map.setCenter([lng,lat]); map.setZoom(12);
+  }
+  toast('已定位工作地：'+s.name);
+}
+function clearRouteOverlays(){
+  const map = state.mapCommute; if(!map) return;
+  if(state._routeLine){ map.remove(state._routeLine); state._routeLine=null; }
+  if(state._areaMarkers){ map.remove(state._areaMarkers); state._areaMarkers=null; }
+}
+function routeOnce(origin, dest, mode){
+  return new Promise((resolve)=>{
+    const finish = (s, r, parser)=>{
+      if(s!=='complete' || !r){ resolve(null); return; }
+      resolve(parser(r));
+    };
+    if(mode==='transit'){
+      const t = new AMap.Transfer({ city:'香港', policy: AMap.TransferPolicy.LEAST_TIME });
+      t.search(origin, dest, (s,r)=>finish(s,r,(res)=>{
+        if(!res.plans || !res.plans.length) return null;
+        const p = res.plans[0];
+        let path=[];
+        try{
+          (p.segments||[]).forEach(seg=>{
+            const ls = (seg.transit && seg.transit.lines) || [];
+            ls.forEach(l=>{ if(l.polyline){ l.polyline.forEach(pp=>path.push([pp.lng, pp.lat])); } });
+            if(seg.walking && seg.walking.steps){ seg.walking.steps.forEach(st=>{ if(st.path){ st.path.forEach(pp=>path.push([pp.lng,pp.lat])); } }); }
+          });
+        }catch(e){}
+        return { time:p.time, dist:p.distance, detail: '换乘'+(p.transit && p.transit.length ? p.transit.length : 0)+'次' };
+      }));
+    }else if(mode==='driving'){
+      const d = new AMap.Driving({ city:'香港' });
+      d.search(origin, dest, (s,r)=>finish(s,r,(res)=>{
+        if(!res.routes || !res.routes.length) return null;
+        const rt = res.routes[0]; let path=[];
+        try{ rt.steps.forEach(st=>{ if(st.path){ st.path.forEach(pp=>path.push([pp.lng,pp.lat])); } }); }catch(e){}
+        return { time:rt.time, dist:rt.distance, detail:'驾车' };
+      }));
+    }else{
+      const w = new AMap.Walking();
+      w.search(origin, dest, (s,r)=>finish(s,r,(res)=>{
+        if(!res.routes || !res.routes.length) return null;
+        const rt = res.routes[0]; let path=[];
+        try{ rt.steps.forEach(st=>{ if(st.path){ st.path.forEach(pp=>path.push([pp.lng,pp.lat])); } }); }catch(e){}
+        return { time:rt.time, dist:rt.distance, detail:'步行' };
+      }));
+    }
+  });
+}
+const CACHE_TTL = 6*3600*1000;
+function cacheKey(mode){ return 'gjt_commute_' + mode + '_' + (state.workPoi ? state.workPoi.lng.toFixed(3)+'_'+state.workPoi.lat.toFixed(3) : 'x'); }
+async function runCommute(){
+  if(!state.workPoi){ toast('请先搜索并选择工作地','warn'); return; }
+  if(!await ensureMap('commute')) return;
+  state.commuting = true; state.progress = 0; state.commuteResults = [];
+  clearRouteOverlays();
+  const cache = {};
+  try{ Object.assign(cache, JSON.parse(localStorage.getItem(cacheKey(state.mode))||'{}')); }catch(e){}
+  const origin = [state.workPoi.lng, state.workPoi.lat];
+  let done = 0;
+  for(const area of state.areas){
+    state.progressText = '正在计算 '+area.name+' 的通勤…';
+    let r = cache[area.id];
+    if(!r){
+      const raw = await routeOnce(origin, [area.lng, area.lat], state.mode);
+      if(raw){
+        r = { time:raw.time, dist:raw.dist, detail:raw.detail };
+        cache[area.id] = r;
+        try{ localStorage.setItem(cacheKey(state.mode), JSON.stringify(cache)); }catch(e){}
+      }
+    }
+    if(r) state.commuteResults.push({ area, time:r.time, distKm:r.dist ? (r.dist/1000).toFixed(1) : '--', detail:r.detail });
+    done++; state.progress = Math.round(done/state.areas.length*100);
+    state.progressText = '已完成 '+done+'/'+state.areas.length+' 区';
+    await nextTick();
+  }
+  state.commuting = false;
+  const sorted = [...state.commuteResults].sort((a,b)=>a.time-b.time);
+  if(sorted.length){ sorted[0].best = true; state.selArea = sorted[0].area.id; }
+  drawAreaMarkers(sorted);
+  toast('通勤对比完成，共 '+state.commuteResults.length+' 区');
+}
+function drawAreaMarkers(sorted){
+  const map = state.mapCommute; if(!map) return;
+  const markers = sorted.map((r,i)=>{
+    const color = i===0 ? '#bf3a2b' : '#1c1a17';
+    return new AMap.Marker({ position:[r.area.lng, r.area.lat],
+      content:'<div style="width:26px;height:26px;border-radius:8px;background:'+color+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.25)">'+(i+1)+'</div>',
+      title: r.area.name + ' ' + fmtMin(r.time) });
+  });
+  map.add(markers); state._areaMarkers = markers;
+}
+function selectCommute(r){
+  state.selArea = r.area.id;
+  const map = state.mapCommute; if(!map) return;
+  if(state._routeLine){ map.remove(state._routeLine); state._routeLine=null; }
+  const line = new AMap.Polyline({
+    path:[[state.workPoi.lng,state.workPoi.lat],[r.area.lng,r.area.lat]],
+    strokeColor: r.best ? '#bf3a2b' : '#55504a', strokeWeight:4, strokeStyle:'dashed', strokeOpacity:.85,
+    showDir:true,
+  });
+  map.add(line); state._routeLine = line;
+  map.setFitView([line, ...(state._areaMarkers||[])]);
+}
+const commuteSorted = computed(()=>[...state.commuteResults].sort((a,b)=>(a.time||9e9)-(b.time||9e9)));
+const progressPct = computed(()=>state.progress);
+
+/* ================= ② 资格速查 ================= */
+const scenario = computed(()=>{
+  const { tax, answers } = state;
+  if(!tax || !tax.scenarios) return null;
+  const a = answers;
+  if(!a.q_identity || !a.q_own || !a.q_first) return null;
+  return tax.scenarios.find(s=>{
+    const m = s.match;
+    const idm = m.q_identity;
+    const idOk = Array.isArray(idm) ? idm.includes(a.q_identity) : (idm === a.q_identity || idm==='*');
+    return idOk && (m.q_own==='*' || m.q_own===a.q_own) && (m.q_first==='*' || m.q_first===a.q_first);
+  }) || null;
+});
+const stampDuty = computed(()=>{
+  if(!state.tax || !state.tax.avdRates || !state.tax.avdRates.length) return 0;
+  const price = state.priceInput*10000; // 万→元
+  if(price<=2000000) return 100/10000; // 100 港元
+  const r = state.tax.avdRates.find(x=> price <= x.maxFt*10000) || state.tax.avdRates[state.tax.avdRates.length-1];
+  return price * (r.pct/100) / 10000;
+});
+const stampDutyLabel = computed(()=>{
+  if(!state.tax || !state.tax.avdRates || !state.tax.avdRates.length) return '--';
+  const price = state.priceInput*10000;
+  if(price<=2000000) return '定额 100 港元';
+  const r = state.tax.avdRates.find(x=> price <= x.maxFt*10000) || state.tax.avdRates[state.tax.avdRates.length-1];
+  return '第2标准税率 '+r.rate;
+});
+
+/* ================= ③ 生活地图 ================= */
+async function toggleLayer(layer){
+  if(!await ensureMap('lifemap')) return;
+  const on = !state.layerOn[layer.id];
+  state.layerOn[layer.id] = on;
+  if(on) loadLayerPois(layer);
+  else clearLayerPois(layer.id);
+}
+function clearLayerPois(layerId){
+  const map = state.mapLife; if(!map) return;
+  const mks = state.poiMarkers[layerId]||[];
+  if(mks.length) map.remove(mks);
+  delete state.poiMarkers[layerId];
+  state.poiResults = state.poiResults.filter(p=>p.layerId!==layerId);
+}
+function loadLayerPois(layer){
+  state.loadingLayer = layer.id;
+  const doSearch = (city)=>{
+    return new Promise((res)=>{
+      const opts = { city: city, pageSize: 40, pageIndex: 1, extensions:'all' };
+      if(layer.type) opts.type = layer.type;
+      const ps = new AMap.PlaceSearch(opts);
+      const kw = layer.kw || ' ';
+      ps.search(kw, (status, result)=>{
+        if(status==='complete' && result.poiList && result.poiList.pois) res(result.poiList.pois);
+        else res([]);
+      });
+    });
+  };
+  doSearch('香港').then(pois=>{
+    if(!pois.length) return doSearch('HK');
+    return pois;
+  }).then(pois=>{
+    state.loadingLayer='';
+    if(!pois.length){ toast(layer.name+'：未检索到 POI','warn'); return; }
+    const map = state.mapLife;
+    const markers = pois.filter(p=>p.location).map(p=>{
+      const [lng,lat] = p.location.split(',').map(Number);
+      const mk = new AMap.Marker({ position:[lng,lat],
+        content:'<div style="width:26px;height:26px;border-radius:50%;background:'+layer.color+';color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)"><i class="fa-solid '+layer.icon+'" style="font-size:11px"></i></div>',
+        title:p.name });
+      mk.on('click', ()=>{ new AMap.InfoWindow({ content:'<div style="padding:6px 4px;max-width:240px"><div style="font-weight:600;font-size:13px">'+p.name+'</div><div style="font-size:12px;color:#666;margin-top:4px">'+(p.address||p.pname+' '+p.adname)+'</div></div>', offset:new AMap.Pixel(0,-30)}).open(map,[lng,lat]); });
+      mk._poi = { name:p.name, address:p.address, pname:p.pname, adname:p.adname, lng, lat, layerId:layer.id, color:layer.color };
+      return mk;
+    });
+    map.add(markers);
+    state.poiMarkers[layer.id] = markers;
+    state.poiResults = state.poiResults.filter(p=>p.layerId!==layer.id);
+    markers.forEach(m=>state.poiResults.push(m._poi));
+    toast(layer.name+'：加载 '+markers.length+' 个 POI');
+  }).catch(()=>{ state.loadingLayer=''; toast(layer.name+' 加载失败','error'); });
+}
+const poiCount = (id)=> (state.poiMarkers[id]||[]).length;
+const poiListShown = computed(()=> state.poiResults.slice(0,60));
+function focusPoi(p){
+  const map = state.mapLife; if(!map) return;
+  map.setCenter([p.lng,p.lat]); map.setZoom(15);
+}
+function viewAreaOnMap(a){
+  goTo('lifemap');
+  nextTick(async ()=>{
+    if(!await ensureMap('lifemap')) return;
+    const map = state.mapLife;
+    if(state.regionCircle) map.remove(state.regionCircle);
+    if(state.regionMarker) map.remove(state.regionMarker);
+    state.regionCircle = new AMap.Circle({ center:[a.lng,a.lat], radius:2500, strokeColor:'#bf3a2b', strokeWeight:2, strokeOpacity:.6, fillColor:'#bf3a2b', fillOpacity:.08 });
+    state.regionMarker = new AMap.Marker({ position:[a.lng,a.lat],
+      content:'<div style="background:#1c1a17;color:#fff;padding:5px 12px;border-radius:99px;font-size:13px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.3)">'+a.name+'</div>' });
+    map.add([state.regionCircle, state.regionMarker]);
+    map.setZoom(12); map.setCenter([a.lng,a.lat]);
+    toast('已定位 '+a.name);
+  });
+}
+async function showMtrNear(a){
+  goTo('lifemap');
+  await nextTick();
+  if(!await ensureMap('lifemap')) return;
+  const map = state.mapLife;
+  if(state.regionCircle) map.remove(state.regionCircle);
+  if(state.regionMarker) map.remove(state.regionMarker);
+  state.regionCircle = new AMap.Circle({ center:[a.lng,a.lat], radius:2500, strokeColor:'#bf3a2b', strokeWeight:2, strokeOpacity:.6, fillColor:'#bf3a2b', fillOpacity:.08 });
+  state.regionMarker = new AMap.Marker({ position:[a.lng,a.lat],
+    content:'<div style="background:#1c1a17;color:#fff;padding:5px 12px;border-radius:99px;font-size:13px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.3)">'+a.name+'</div>' });
+  map.add([state.regionCircle, state.regionMarker]);
+  map.setZoom(12); map.setCenter([a.lng,a.lat]);
+  state.layerOn.mtr = true;
+  state.loadingLayer = 'mtr';
+  const ps = new AMap.PlaceSearch({ type:'150500', city:'香港', pageSize:30, pageIndex:1 });
+  ps.searchNearBy('', [a.lng,a.lat], 4000, (status,result)=>{
+    state.loadingLayer='';
+    const pois = (status==='complete' && result.poiList && result.poiList.pois) ? result.poiList.pois : [];
+    if(!pois.length){ toast(a.name+' 附近未找到港铁站标记','warn'); return; }
+    const markers = pois.filter(p=>p.location).map(p=>{
+      const [lng,lat]=p.location.split(',').map(Number);
+      const mk = new AMap.Marker({ position:[lng,lat],
+        content:'<div style="width:24px;height:24px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)"><i class="fa-solid fa-train-subway" style="font-size:10px"></i></div>' });
+      mk._poi = { name:p.name, address:p.address, pname:p.pname, adname:p.adname, lng, lat, layerId:'mtr', color:'#2563eb' };
+      return mk;
+    });
+    map.add(markers);
+    state.poiMarkers.mtr = markers;
+    markers.forEach(m=>state.poiResults.push(m._poi));
+    toast('找到 '+markers.length+' 个港铁站点');
+  });
+}
+
+/* ================= ④ 区域画像 ================= */
+const filteredAreas = computed(()=>{
+  const q = state.areaQuery.trim().toLowerCase();
+  if(!q) return state.areas;
+  return state.areas.filter(a=>{
+    return a.name.toLowerCase().includes(q) || a.en.toLowerCase().includes(q)
+      || (a.aliases||[]).some(al=>al.toLowerCase().includes(q))
+      || (a.tags||[]).some(t=>t.includes(q));
+  });
+});
+function csvEscape(s){ s = String(s==null?'':s); return '"'+s.replace(/"/g,'""')+'"'; }
+function exportAreasCSV(){
+  const head = ['区域','英文','参考均价(万/呎)','校网','通勤','基建利好','内地生活便利度','适合人群'];
+  const rows = state.areas.map(a=>[a.name, a.en, a.pricePerFt/10000, a.schoolNet, a.commute, a.infra, a.livability, a.suitable].map(csvEscape));
+  downloadCSV('港居通_区域画像.csv', [head,...rows]);
+  toast('区域表格已下载');
+}
+function exportCommuteCSV(){
+  const head = ['排名','区域','通勤时间','距离(km)','详情'];
+  const rows = commuteSorted.value.map((r,i)=>[i+1, r.area.name, fmtMin(r.time), r.distKm, r.detail].map(csvEscape));
+  downloadCSV('港居通_通勤对比.csv', [head,...rows]);
+  toast('通勤表格已下载');
+}
+function downloadCSV(filename, rows){
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv], { type:'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+async function exportPNG(el, filename){
+  try{
+    const canvas = await html2canvas(el, { backgroundColor:'#ece7db', scale:2, useCORS:true });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png'); a.download = filename; a.click();
+    toast('图片已导出');
+  }catch(e){ toast('导出失败','error'); }
+}
+function exportAreasPNG(){ exportPNG(document.getElementById('area-grid'), '港居通_区域画像.png'); }
+function exportBudgetPNG(){ exportPNG(document.getElementById('budget-chart'), '港居通_预算对比.png'); }
+
+/* ================= ⑤ 预算对比 ================= */
+const hkPriceSqm = computed(()=>{
+  // 万HKD/呎 → RMB/㎡ = 呎价万×10000 /0.0929 ×汇率
+  return state.perFtSel*10000/0.092903*state.exchangeRate;
+});
+const hkAreaSqm = computed(()=>{
+  if(!state.perFtSel) return 0;
+  const budgetRmb = state.budgetHKD*10000*state.exchangeRate; // 元
+  return budgetRmb / hkPriceSqm.value; // ㎡
+});
+const budgetRows = computed(()=>{
+  const budgetRmb = state.budgetHKD*10000*state.exchangeRate;
+  return state.mainCities.map(c=>({
+    name:c.name, price:c.price, color:c.color,
+    area: Math.round(budgetRmb/(c.price*10000)),
+  }));
+});
+function barPct(area){
+  const max = Math.max(...budgetRows.value.map(r=>r.area), hkAreaSqm.value, 1);
+  return Math.max(4, Math.round(area/max*100))+'%';
+}
+
+/* ---------- 设置 ---------- */
+function openSettings(){
+  const saved = JSON.parse(localStorage.getItem('gjt_amap_cfg')||'null');
+  state.cfgKey = (saved&&saved.key) || CFG.jsKey || '';
+  state.cfgSjc = (saved&&saved.sjc) || CFG.securityJsCode || '';
+  state.showSettings = true;
+}
+function saveSettings(){
+  localStorage.setItem('gjt_amap_cfg', JSON.stringify({ key:state.cfgKey, sjc:state.cfgSjc }));
+  state.showSettings = false;
+  toast('已保存，正在重载地图…');
+  location.reload();
+}
+
+/* ---------- 启动 ---------- */
+state.dateStr = new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+watch(()=>state.amapReady, (v)=>{
+  if(v){
+    ['smart','commute','lifemap'].forEach(k=>{
+      const el = document.getElementById('map-'+k);
+      if(el && el.getBoundingClientRect().top < window.innerHeight) ensureMap(k);
+    });
+  }
+});
+loadData().then(()=>{
+  nextTick(async ()=>{
+    setupObservers();
+    // 有 Key 则自动初始化首屏地图，无 Key 显示占位引导
+    if(amapKeys().key){
+      await ensureMap('commute');
+    }else{
+      toast('提示：配置高德 Key 后可用通勤计算/生活地图（右上角「设置」）','warn');
+    }
+  });
+});
+
+createApp({
+  setup(){
+    return {
+      ...Vue.toRefs(state),
+      scenario, stampDuty, stampDutyLabel, commuteSorted, progressPct, filteredAreas,
+      hkAreaSqm, hkPriceSqm, budgetRows, smartActiveArea,
+      dataNote: computed(()=>state.dataNote),
+      goTo, openSettings, saveSettings,
+      searchWork, pickWork, runCommute, selectCommute, exportCommuteCSV,
+      toggleLayer, poiCount, poiListShown, focusPoi, viewAreaOnMap, showMtrNear,
+      exportAreasCSV, exportAreasPNG, exportBudgetPNG,
+      fmtWan, fmtMin, barPct, inkArt,
+      toggleTag, labelName, runSmart, resetSmart, selectSmart, refreshLifeCircle, smartScoreColor,
+    };
+  },
+}).mount('#app');
+</script>
+</body>
+</html>
