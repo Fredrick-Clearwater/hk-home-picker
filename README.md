@@ -47,3 +47,17 @@ npx serve .
 * 政策以香港税务局最新公布为准
 * 区域尺价为参考均价，会随市场波动
 * POI 数据为人工整理样本，仅供方向性参考
+
+## 高德地图 Key
+
+`pick/config.js` 已填入默认 Key。GitHub Pages 静态站 key 是公开的，但**高德控制台有域名白名单机制防盗用**——必须做这一步，否则 Key 会在第一次请求时被高德作废。
+
+去 [高德开放平台](https://console.amap.com/dev/key/app) → 找到这个应用 → 在 Key 的「域名白名单」里填：
+
+```
+fredrick-clearwater.github.io/*
+```
+
+如果想在自己的域名跑，也加一行自己的域名。
+
+如果默认 Key 失效或不够用，可以在工具页右上角点「设置」填自己的 Key，存浏览器 localStorage。
